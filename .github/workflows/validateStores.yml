@@ -4,10 +4,12 @@ on:
  pull_request:
   paths:
    - "store/**"
+   - "plugins/ui/src/SettingsPage/PluginStoreTab/**"
  push:
   branches: [master, dev]
   paths:
    - "store/**"
+   - "plugins/ui/src/SettingsPage/PluginStoreTab/**"
    # registry.json is generated, validating it on every bot commit is noise
    - "!store/registry.json"
  workflow_dispatch:
@@ -30,3 +32,19 @@ jobs:
 
    - name: Validate store registry 🔍
      run: ./store/validate.sh
+
+ Test:
+  name: Registry logic tests
+  runs-on: ubuntu-latest
+
+  steps:
+   - uses: actions/checkout@v4
+
+   - name: Install Node.js 📥
+     uses: actions/setup-node@v4
+     with:
+      node-version: latest
+
+   # No dependencies needed, the logic module is deliberately import free
+   - name: Run tests 🧪
+     run: node --experimental-strip-types --test "plugins/**/*.test.ts"
