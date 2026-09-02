@@ -1,0 +1,49 @@
+name: "Check Store Submission"
+
+on:
+ issues:
+  types: [opened, edited]
+
+# Comments on the issue and nothing else. It never writes to the repo, so a submission
+# cannot put anything into master on its own
+permissions:
+ contents: read
+ issues: write
+
+concurrency:
+ group: ${{ github.workflow }}-${{ github.event.issue.number }}
+ cancel-in-progress: true
+
+jobs:
+ Check:
+  name: Check submitted store
+  if: contains(github.event.issue.labels.*.name, 'store-submission')
+  runs-on: ubuntu-latest
+
+  steps:
+   - uses: actions/checkout@v4
+
+   - name: Install Node.js 📥
+     uses: actions/setup-node@v4
+     with:
+      node-version: latest
+
+   - name: Check the store 🔍
+     id: check
+     # Issue content only ever travels as an env var, never as part of a command
+     env:
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     run: |
+      {
+       echo 'report<<REPORT_EOF'
+       node store/checkSubmission.mjs
+       echo REPORT_EOF
+      } >> "$GITHUB_OUTPUT"
+
+   - name: Post the report 💬
+     env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPORT: ${{ steps.check.outputs.report }}
+     run: gh issue comment "${{ github.event.issue.number }}" --repo "${{ github.repository }}" --body "$REPORT"

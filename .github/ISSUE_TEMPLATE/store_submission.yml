@@ -1,0 +1,31 @@
+name: Plugin store submission
+description: Get your plugin store listed in Luna Settings > Plugin Store
+title: "[STORE] "
+labels: [store-submission]
+body:
+ - type: markdown
+   attributes:
+    value: |
+     Prefer doing it yourself? Editing [store/stores.json](https://github.com/Inrixia/TidaLuna/edit/master/store/stores.json)
+     opens a pull request straight from the browser, no clone needed. See [store/README.md](https://github.com/Inrixia/TidaLuna/blob/master/store/README.md).
+
+     Fill this in instead and a bot will check your store and post the entry ready to merge.
+
+ - type: input
+   id: url
+   attributes:
+    label: store.json url
+    description: The direct link to the store.json release asset
+    placeholder: https://github.com/you/luna-plugins/releases/download/latest/store.json
+   validations:
+    required: true
+
+ - type: checkboxes
+   id: confirm
+   attributes:
+    label: Confirm
+    options:
+     - label: This repo is mine, or I have the owners go ahead
+       required: true
+     - label: I understand that being listed is not a security review, and that my plugins run with full access to the users machine
+       required: true
