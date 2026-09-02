@@ -9,7 +9,8 @@ import Typography from "@mui/material/Typography";
 import { LunaTrashButton, SpinningButton } from "../../components";
 import { LunaPluginHeader } from "../PluginsTab/LunaPluginHeader";
 import { LunaStorePlugin } from "./LunaStorePlugin";
-import type { RegistryStore } from "./registry";
+import { metricsAreFresh, type RegistryStore } from "./registry";
+import { StoreHealth, StoreStars } from "./StoreMetrics";
 
 interface StorePackage extends PluginPackage {
 	plugins: string[];
@@ -68,6 +69,9 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 	// Don't show error for local dev store
 	if (loadError && isLocalDevStore) return null;
 
+	// A stale registry means wrong numbers, and a wrong number is worse than none
+	const metrics = metricsAreFresh() ? entry : undefined;
+
 	// Stores are third party json, a malformed plugins array must not take the whole settings page down
 	const plugins = Array.isArray(pkg?.plugins) ? pkg.plugins.filter((plugin) => typeof plugin === "string") : undefined;
 	const query = searchQuery.toLowerCase();
@@ -92,6 +96,8 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 				desc={desc}
 				children={
 					<>
+						{metrics?.stars !== undefined && <StoreStars stars={metrics.stars} repo={metrics.repo} pluginCount={metrics.pluginCount} />}
+						{metrics?.health !== undefined && metrics.health !== "ok" && <StoreHealth health={metrics.health} />}
 						<SpinningButton title="Reload store" spin={loading} disabled={disabled} onClick={fetchPackage} />
 						<LunaTrashButton disabled={isLocalDevStore} title="Remove store" onClick={onRemove} />
 					</>
@@ -99,7 +105,16 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 			/>
 			<Grid columns={2} spacing={2} container>
 				{filteredPlugins?.map((plugin) => (
-					<Grid size={1} children={<LunaStorePlugin url={`${url}/${isLocalDevStore ? plugin : plugin.replaceAll(" ", ".")}`} key={plugin} />} />
+					<Grid
+						size={1}
+						children={
+							<LunaStorePlugin
+								url={`${url}/${isLocalDevStore ? plugin : plugin.replaceAll(" ", ".")}`}
+								downloads={metrics?.downloads?.[plugin]}
+								key={plugin}
+							/>
+						}
+					/>
 				))}
 			</Grid>
 		</Stack>

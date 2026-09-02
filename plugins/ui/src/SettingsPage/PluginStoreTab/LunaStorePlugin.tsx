@@ -3,11 +3,12 @@ import { LunaPlugin } from "@luna/core";
 import React, { useEffect, useState } from "react";
 
 import { LunaPluginHeader } from "../PluginsTab/LunaPluginHeader";
+import { PluginDownloads } from "./StoreMetrics";
 
 import ButtonBase from "@mui/material/ButtonBase";
 import Typography from "@mui/material/Typography";
 
-export const LunaStorePlugin = React.memo(({ url }: { url: string }) => {
+export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; downloads?: number }) => {
 	const [plugin, setPlugin] = useState<LunaPlugin | undefined>(undefined);
 	const [loadError, setLoadError] = useState<string | undefined>(undefined);
 	const [isHovered, setIsHovered] = useState(false);
@@ -47,6 +48,7 @@ export const LunaStorePlugin = React.memo(({ url }: { url: string }) => {
 				loadError={loadError}
 				author={plugin.package?.author}
 				desc={plugin.package?.description}
+				children={downloads !== undefined && <PluginDownloads downloads={downloads} />}
 			/>
 			<Typography
 				sx={{

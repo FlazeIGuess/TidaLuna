@@ -1,3 +1,5 @@
+import { store as obyStore } from "oby";
+
 import { ftch, ReactiveStore } from "@luna/core";
 
 import {
@@ -42,12 +44,13 @@ export const hiddenStoreUrls = await pluginStores.getReactive<string[]>("hiddenS
 // until a registry lands, it is deliberately never merged into userStoreUrls by itself
 const legacyStoreUrls = (await pluginStores.get<string[]>("storeUrls")) ?? [];
 
+// Unwrapped, the results end up as React props and the logic module must not hold live proxies
 const state = (): RegistryState => ({
-	registryStores: registryStores.stores,
-	userUrls: userStoreUrls,
-	hiddenUrls: hiddenStoreUrls,
+	registryStores: obyStore.unwrap(registryStores).stores,
+	userUrls: obyStore.unwrap(userStoreUrls),
+	hiddenUrls: obyStore.unwrap(hiddenStoreUrls),
 	legacyUrls: legacyStoreUrls,
-	patterns: blocklist.patterns,
+	patterns: obyStore.unwrap(blocklist).patterns,
 });
 
 export const isBlocked = (url: string) => isBlockedBy(blocklist.patterns, url);
