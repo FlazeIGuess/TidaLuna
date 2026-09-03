@@ -62,6 +62,8 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle, rootRef,
 	const [enabled, setEnabled] = React.useState(plugin.enabled);
 	const [loading, setLoading] = React.useState(plugin.loading._);
 	const [loadError, setLoadError] = React.useState(plugin.loadError._);
+	// Separate from loadError: only true when load() itself threw
+	const [loadFailed, setLoadFailed] = React.useState(plugin.loadFailed._);
 	const [installed, setInstalled] = React.useState(plugin.installed);
 	const [pkg, setPackage] = React.useState<PluginPackage>(obyStore.unwrap(plugin.store.package));
 	const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
@@ -74,6 +76,7 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle, rootRef,
 			plugin.onSetEnabled((next) => setEnabled(next)),
 			plugin.loading.onValue((next) => setLoading(next)),
 			plugin.loadError.onValue((next) => setLoadError(next)),
+			plugin.loadFailed.onValue((next) => setLoadFailed(next)),
 			obyStore.on(
 				() => plugin.store.package,
 				() => setPackage(obyStore.unwrap(plugin.store.package)),
@@ -121,7 +124,7 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle, rootRef,
 			{pkg.version && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={pkg.version} />}
 			{isDev && <LunaBadge children="Dev" />}
 			{!enabled && !loadError && <LunaBadge children="Disabled" />}
-			{loadError && <LunaBadge tone="danger" children="Load failed" />}
+			{loadError && <LunaBadge tone="danger" children={loadFailed ? "Load failed" : "Runtime error"} />}
 		</>
 	);
 

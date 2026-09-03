@@ -242,6 +242,11 @@ export class LunaPlugin {
 	public readonly loading: Signal<boolean> = new Signal(false);
 	public readonly fetching: Signal<boolean> = new Signal(false);
 	public readonly loadError: Signal<string | undefined> = new Signal(undefined);
+	/**
+	 * True only when load() itself threw. loadError also carries runtime errors reported through the
+	 * module's tracer long after a successful load, and calling those "load failed" is wrong.
+	 */
+	public readonly loadFailed: Signal<boolean> = new Signal(false);
 
 	public readonly _liveReload: Signal<boolean>;
 	public onSetLiveReload;
@@ -291,6 +296,25 @@ export class LunaPlugin {
 	// #endregion
 
 	// #region Storage
+	/**
+	 * Find the plugin whose bundle appears in an error's stack. Emitters hand the same onError to
+	 * every listener without saying which one threw, so the stack is the only thing that still
+	 * names the culprit. Returns undefined when no frame belongs to a known plugin.
+	 */
+	public static fromStack(stack?: string): LunaPlugin | undefined {
+		if (stack === undefined) return undefined;
+		for (const plugin of Object.values(this.plugins)) {
+			const url = plugin.store.url;
+			if (url.length > 0 && stack.includes(url)) return plugin;
+		}
+		return undefined;
+	}
+
+	/** Record an error that happened after load. Does not mark the plugin as failed to load. */
+	public reportRuntimeError(message: string): void {
+		this.loadError._ = message;
+	}
+
 	public get url(): string {
 		return this.store.url;
 	}
@@ -361,6 +385,7 @@ export class LunaPlugin {
 		await this.unload();
 		this._enabled._ = false;
 		this.loadError._ = undefined;
+		this.loadFailed._ = false;
 	}
 	public async reload() {
 		// LoadExports will handle unloading etc and ensure code is live
@@ -459,6 +484,7 @@ export class LunaPlugin {
 
 			// Ensure loadError is cleared
 			this.loadError._ = undefined;
+			this.loadFailed._ = false;
 
 			const { onUnload, errSignal } = this.exports;
 
@@ -488,6 +514,7 @@ export class LunaPlugin {
 		} catch (err) {
 			// Set loadError for anyone listening
 			this.loadError._ = (<any>err)?.message ?? err?.toString();
+			this.loadFailed._ = true;
 			// Notify users
 			this.trace.msg.err.withContext(`Failed to load`)(err);
 			// Ensure we arnt partially loaded

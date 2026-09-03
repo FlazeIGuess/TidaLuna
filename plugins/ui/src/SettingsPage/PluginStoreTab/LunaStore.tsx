@@ -44,7 +44,9 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 			if (!response.ok) throw new Error(`Failed to fetch package: ${response.statusText}`);
 			setPackage(await response.json());
 		} catch (error: any) {
-			console.error("Error fetching package:", error);
+			// The local dev store is absent unless someone is building a plugin, so its failure is
+			// expected and must not spam the console on every start
+			if (url !== DEV_STORE_URL) console.error(`[PluginStore] Could not load ${url}:`, error);
 			setLoadError(error.message || "Unknown error occurred");
 			setPackage(undefined);
 		} finally {
