@@ -2,6 +2,7 @@ export * from './LunaAuthor';
 export * from './LunaButton';
 export * from './LunaLink';
 export * from './LunaList';
+export * from './LunaSearch';
 export * from './LunaNumber';
 export * from './LunaSecureText';
 export * from './LunaStack';

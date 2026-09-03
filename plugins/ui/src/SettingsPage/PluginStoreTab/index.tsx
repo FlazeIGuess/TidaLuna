@@ -6,11 +6,11 @@ import { unloadSet } from "@luna/core";
 
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { LunaGroup, LunaRow, LunaSection } from "../../components/LunaList";
-import { descSx, inputSx, metrics, wave } from "../../tidalTokens";
+import { LunaSearch } from "../../components/LunaSearch";
+import { descSx, metrics, searchStickyTop, wave } from "../../tidalTokens";
 import { InstallFromUrl } from "./InstallFromUrl";
 import { LunaStore } from "./LunaStore";
 import { hiddenStoreUrls, refreshRegistry, registryStores, removeStore, userStoreUrls, visibleStores, type StoreEntry } from "./registry";
@@ -38,16 +38,9 @@ export const PluginStoreTab = React.memo(() => {
 
 	return (
 		<Stack spacing={3} sx={{ fontFamily: wave.font, maxWidth: metrics.maxTextW }}>
-			{/* Sticky so filtering a long list never means scrolling back up to change the query */}
-			<Box sx={{ position: "sticky", top: 0, zIndex: 2, backgroundColor: wave.fill, paddingY: 1.5 }}>
-				<TextField
-					fullWidth
-					size="small"
-					sx={inputSx}
-					placeholder="Search plugins"
-					value={searchQuery}
-					onChange={(e) => setSearchQuery(e.target.value)}
-				/>
+			{/* Sticky at Tidal's search-bar height so filtering a long list never means scrolling up */}
+			<Box sx={{ position: "sticky", top: searchStickyTop, zIndex: 3 }}>
+				<LunaSearch value={searchQuery} onChange={setSearchQuery} placeholder="Search plugins" />
 			</Box>
 
 			<LunaStore url={DEV_STORE_URL} onRemove={() => {}} searchQuery={searchQuery} />

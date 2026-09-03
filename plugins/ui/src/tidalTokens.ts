@@ -157,6 +157,13 @@ export const selectSx = {
 	"& .MuiSvgIcon-root": { color: wave.textSecondary },
 } as const;
 
+/**
+ * Sticky offset that lifts the search into Tidal's own top-bar row, level with Tidal's search field
+ * and the back/forward buttons. Tidal's search sits at y=42; the content scroll area's sticky anchor
+ * is its top plus Tidal's ~56px top bar, so a negative top of -44px pulls the search up onto that row.
+ */
+export const searchStickyTop = "-44px";
+
 /** One line, ellipsis, full text belongs in a title attribute. Fixed row height depends on this. */
 export const oneLineSx = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
 

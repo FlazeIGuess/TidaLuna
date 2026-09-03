@@ -10,9 +10,13 @@ import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
+import AddRounded from "@mui/icons-material/AddRounded";
 import CheckRounded from "@mui/icons-material/CheckRounded";
+import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
 
+import { LunaBadge } from "../../components/LunaList";
 import { buttonSx, clampSx, descSx, metaSx, titleSx, wave } from "../../tidalTokens";
 
 const authorName = (author: unknown): string | undefined =>
@@ -31,6 +35,7 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 	const [installed, setInstalled] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [hovered, setHovered] = useState(false);
+	const [btnHover, setBtnHover] = useState(false);
 
 	useEffect(() => {
 		LunaPlugin.fromStorage({ url })
@@ -76,17 +81,19 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				padding: "14px",
 				borderRadius: wave.radius,
 				backgroundColor: hovered ? wave.surfaceRaised : wave.surface,
-				// Neutral border always. State is carried by the glyph, so it works in greyscale too.
+				// Installed cards carry an accent left bar so the state reads at a glance across the grid,
+				// on top of the check glyph and the button label. Everything else keeps a neutral border.
 				border: `1px solid ${wave.line}`,
+				boxShadow: installed ? `inset 3px 0 0 ${wave.accent}` : "none",
 				transition: "background-color .15s ease",
 			}}
 		>
 			<Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", minWidth: 0 }}>
-				{installed && <CheckRounded sx={{ fontSize: 16, color: wave.textSecondary, flexShrink: 0, marginTop: "2px" }} />}
 				{loadError !== undefined && <ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger, flexShrink: 0, marginTop: "2px" }} />}
 				<Tooltip title={plugin.name} placement="top-start">
 					<Typography sx={{ ...titleSx, ...clampSx(2), flex: 1, minWidth: 0, overflowWrap: "anywhere" }} children={plugin.name} />
 				</Tooltip>
+				{installed && <LunaBadge tone="neutral" children="Installed" />}
 				{version && <Typography sx={{ ...metaSx, flex: "0 0 auto", paddingTop: "1px" }} children={version} />}
 			</Stack>
 
@@ -104,20 +111,38 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				)}
 				<Box sx={{ flexGrow: 1 }} />
 				{downloads !== undefined && downloads > 0 && (
-					<Tooltip title="Downloads from the GitHub release" placement="top">
-						<Typography sx={{ ...metaSx, fontVariantNumeric: "tabular-nums", flex: "0 0 auto" }} children={downloads.toLocaleString()} />
+					<Tooltip title={`${downloads.toLocaleString()} downloads`} placement="top">
+						<Stack direction="row" spacing={0.375} sx={{ alignItems: "center", flexShrink: 0, color: wave.textTertiary }}>
+							<DownloadRounded sx={{ fontSize: 13 }} />
+							<Typography sx={{ ...metaSx, fontVariantNumeric: "tabular-nums" }} children={downloads.toLocaleString()} />
+						</Stack>
 					</Tooltip>
 				)}
 				<Button
 					disableRipple
 					disabled={busy}
 					onClick={toggleInstall}
+					onMouseEnter={() => setBtnHover(true)}
+					onMouseLeave={() => setBtnHover(false)}
+					startIcon={
+						busy ? null : installed ? (
+							btnHover ? <DeleteOutlineRounded sx={{ fontSize: 15 }} /> : <CheckRounded sx={{ fontSize: 15 }} />
+						) : (
+							<AddRounded sx={{ fontSize: 15 }} />
+						)
+					}
 					sx={
 						installed
-							? { ...buttonSx, backgroundColor: "transparent", color: wave.textSecondary, "&:hover": { backgroundColor: wave.line, borderColor: wave.textTertiary, color: wave.danger } }
-							: buttonSx
+							? {
+									...buttonSx,
+									backgroundColor: "transparent",
+									color: btnHover ? wave.danger : wave.textSecondary,
+									borderColor: btnHover ? wave.danger : wave.lineStrong,
+									"& .MuiButton-startIcon": { marginRight: 0.5 },
+								}
+							: { ...buttonSx, "& .MuiButton-startIcon": { marginRight: 0.5 } }
 					}
-					children={busy ? (installed ? "Removing" : "Installing") : installed ? "Remove" : "Install"}
+					children={busy ? (installed ? "Removing" : "Installing") : installed ? (btnHover ? "Remove" : "Installed") : "Install"}
 				/>
 			</Stack>
 		</Box>

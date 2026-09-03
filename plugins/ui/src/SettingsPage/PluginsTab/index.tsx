@@ -4,11 +4,11 @@ import { LunaPlugin, unloadSet } from "@luna/core";
 
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { LunaGroup, LunaRow, LunaSection } from "../../components/LunaList";
-import { descSx, inputSx, metaSx, metrics, wave } from "../../tidalTokens";
+import { LunaSearch } from "../../components/LunaSearch";
+import { descSx, metaSx, metrics, searchStickyTop, wave } from "../../tidalTokens";
 import { LunaPluginSettings } from "./LunaPluginSettings";
 
 const matches = (plugin: LunaPlugin, query: string) => {
@@ -45,6 +45,8 @@ export const PluginsTab = React.memo(() => {
 	const rowRefs = useRef(new Map<string, HTMLElement>());
 	const wasActive = useRef(new Map<string, boolean>());
 	const [scrollTo, setScrollTo] = useState<string | undefined>(undefined);
+	// The row that just moved, marked until the user scrolls or hovers it
+	const [highlight, setHighlight] = useState<string | undefined>(undefined);
 
 	useEffect(() => {
 		const plugins = Object.values(LunaPlugin.plugins).filter((p) => p.installed && !LunaPlugin.corePlugins.has(p.name));
@@ -54,7 +56,10 @@ export const PluginsTab = React.memo(() => {
 			const url = plugin.store.url;
 			const nowActive = isActive(plugin);
 			// Only scroll on the transition INTO active (enabled + no error), not on every toggle
-			if (nowActive && !wasActive.current.get(url)) setScrollTo(url);
+			if (nowActive && !wasActive.current.get(url)) {
+				setScrollTo(url);
+				setHighlight(url);
+			}
 			wasActive.current.set(url, nowActive);
 			bump();
 		};
@@ -72,6 +77,21 @@ export const PluginsTab = React.memo(() => {
 		if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
 		setScrollTo(undefined);
 	}, [scrollTo]);
+
+	// Clear the marker once the user takes over: a real wheel/touch/key, not the programmatic scroll
+	useEffect(() => {
+		if (highlight === undefined) return;
+		const clear = () => setHighlight(undefined);
+		const opts = { passive: true } as const;
+		window.addEventListener("wheel", clear, opts);
+		window.addEventListener("touchstart", clear, opts);
+		window.addEventListener("keydown", clear);
+		return () => {
+			window.removeEventListener("wheel", clear);
+			window.removeEventListener("touchstart", clear);
+			window.removeEventListener("keydown", clear);
+		};
+	}, [highlight]);
 
 	const toggle = useCallback((url: string) => setOpenId((prev) => (prev === url ? undefined : url)), []);
 	const setRowRef = useCallback(
@@ -109,6 +129,8 @@ export const PluginsTab = React.memo(() => {
 							open={openId === plugin.store.url}
 							onToggle={() => toggle(plugin.store.url)}
 							rootRef={setRowRef(plugin.store.url)}
+							highlight={highlight === plugin.store.url}
+							onSeen={highlight === plugin.store.url ? () => setHighlight(undefined) : undefined}
 						/>
 					))}
 				</LunaGroup>
@@ -118,18 +140,10 @@ export const PluginsTab = React.memo(() => {
 
 	return (
 		<Stack spacing={3} sx={{ fontFamily: wave.font, maxWidth: metrics.maxTextW }}>
-			<Stack
-				direction="row"
-				spacing={1.5}
-				sx={{ alignItems: "center", position: "sticky", top: 0, zIndex: 2, backgroundColor: wave.fill, paddingY: 1.5 }}
-			>
-				<TextField
-					size="small"
-					sx={{ ...inputSx, flex: 1 }}
-					placeholder="Search installed plugins"
-					value={query}
-					onChange={(e) => setQuery(e.target.value)}
-				/>
+			<Stack direction="row" spacing={1.5} sx={{ alignItems: "center", position: "sticky", top: searchStickyTop, zIndex: 3 }}>
+				<Box sx={{ flex: 1 }}>
+					<LunaSearch value={query} onChange={setQuery} placeholder="Search installed plugins" />
+				</Box>
 				<Typography sx={{ ...metaSx, flex: "0 0 auto" }} children={q === "" ? `${total} installed` : `${shown} of ${total}`} />
 			</Stack>
 
