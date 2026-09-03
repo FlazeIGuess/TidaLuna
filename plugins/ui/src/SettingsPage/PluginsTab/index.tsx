@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
-import { LunaPlugin } from "@luna/core";
+import { LunaPlugin, unloadSet } from "@luna/core";
 
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -17,31 +17,72 @@ const matches = (plugin: LunaPlugin, query: string) => {
 	return `${pkg?.name ?? ""} ${pkg?.description ?? ""}`.toLowerCase().includes(query);
 };
 
+const isActive = (plugin: LunaPlugin) => plugin.enabled && !plugin.loadError._;
+
+const partition = () => {
+	const errored: LunaPlugin[] = [];
+	const enabled: LunaPlugin[] = [];
+	const disabled: LunaPlugin[] = [];
+	for (const plugin of Object.values(LunaPlugin.plugins)) {
+		if (LunaPlugin.corePlugins.has(plugin.name)) continue;
+		if (!plugin.installed) continue;
+		if (plugin.loadError._) errored.push(plugin);
+		else if (plugin.enabled) enabled.push(plugin);
+		else disabled.push(plugin);
+	}
+	const byName = (a: LunaPlugin, b: LunaPlugin) => a.name.localeCompare(b.name);
+	return { errored: errored.sort(byName), enabled: enabled.sort(byName), disabled: disabled.sort(byName) };
+};
+
 export const PluginsTab = React.memo(() => {
 	const [query, setQuery] = useState("");
 	// Single open accordion. One id, not a persisted flag per plugin, so a fresh visit never
 	// starts with thirty panels left open from last time.
 	const [openId, setOpenId] = useState<string | undefined>(undefined);
+	// Re-partition live: enabling a disabled plugin or clearing an error moves the row to Enabled.
+	const [, bump] = useReducer((x: number) => x + 1, 0);
 
-	// Partitioned once. Toggling a switch must not move the row into another section mid session,
-	// or auditing ten plugins turns into ten re-scrolls.
-	const partitions = useMemo(() => {
-		const errored: LunaPlugin[] = [];
-		const enabled: LunaPlugin[] = [];
-		const disabled: LunaPlugin[] = [];
-		for (const plugin of Object.values(LunaPlugin.plugins)) {
-			if (LunaPlugin.corePlugins.has(plugin.name)) continue;
-			if (!plugin.installed) continue;
-			if (plugin.loadError._) errored.push(plugin);
-			else if (plugin.enabled) enabled.push(plugin);
-			else disabled.push(plugin);
-		}
-		const byName = (a: LunaPlugin, b: LunaPlugin) => a.name.localeCompare(b.name);
-		return { errored: errored.sort(byName), enabled: enabled.sort(byName), disabled: disabled.sort(byName) };
+	const rowRefs = useRef(new Map<string, HTMLElement>());
+	const wasActive = useRef(new Map<string, boolean>());
+	const [scrollTo, setScrollTo] = useState<string | undefined>(undefined);
+
+	useEffect(() => {
+		const plugins = Object.values(LunaPlugin.plugins).filter((p) => p.installed && !LunaPlugin.corePlugins.has(p.name));
+		for (const p of plugins) wasActive.current.set(p.store.url, isActive(p));
+
+		const onChange = (plugin: LunaPlugin) => {
+			const url = plugin.store.url;
+			const nowActive = isActive(plugin);
+			// Only scroll on the transition INTO active (enabled + no error), not on every toggle
+			if (nowActive && !wasActive.current.get(url)) setScrollTo(url);
+			wasActive.current.set(url, nowActive);
+			bump();
+		};
+
+		const unloads = new Set(plugins.flatMap((p) => [p.onSetEnabled(() => onChange(p)), p.loadError.onValue(() => onChange(p))]));
+		return () => {
+			unloadSet(unloads);
+		};
 	}, []);
 
-	const toggle = useCallback((url: string) => setOpenId((prev) => (prev === url ? undefined : url)), []);
+	// After the row has moved into its new section, bring it into view there
+	useEffect(() => {
+		if (scrollTo === undefined) return;
+		const el = rowRefs.current.get(scrollTo);
+		if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+		setScrollTo(undefined);
+	}, [scrollTo]);
 
+	const toggle = useCallback((url: string) => setOpenId((prev) => (prev === url ? undefined : url)), []);
+	const setRowRef = useCallback(
+		(url: string) => (el: HTMLElement | null) => {
+			if (el) rowRefs.current.set(url, el);
+			else rowRefs.current.delete(url);
+		},
+		[],
+	);
+
+	const partitions = partition();
 	const total = partitions.errored.length + partitions.enabled.length + partitions.disabled.length;
 	if (total === 0)
 		return (
@@ -62,7 +103,13 @@ export const PluginsTab = React.memo(() => {
 			<LunaSection title={`${title} (${visible.length})`}>
 				<LunaGroup>
 					{visible.map((plugin) => (
-						<LunaPluginSettings key={plugin.store.url} plugin={plugin} open={openId === plugin.store.url} onToggle={() => toggle(plugin.store.url)} />
+						<LunaPluginSettings
+							key={plugin.store.url}
+							plugin={plugin}
+							open={openId === plugin.store.url}
+							onToggle={() => toggle(plugin.store.url)}
+							rootRef={setRowRef(plugin.store.url)}
+						/>
 					))}
 				</LunaGroup>
 			</LunaSection>

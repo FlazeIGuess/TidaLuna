@@ -45,6 +45,8 @@ export interface LunaPluginSettingsProps {
 	plugin: LunaPlugin;
 	open: boolean;
 	onToggle: () => void;
+	/** Ref to the row root, so the tab can scroll to a plugin after it moves section. */
+	rootRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
@@ -53,7 +55,7 @@ export interface LunaPluginSettingsProps {
  * Reload, live reload and uninstall moved into the overflow menu, which took the row from five
  * icon buttons down to two controls.
  */
-export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPluginSettingsProps) => {
+export const LunaPluginSettings = React.memo(({ plugin, open, onToggle, rootRef }: LunaPluginSettingsProps) => {
 	const [enabled, setEnabled] = React.useState(plugin.enabled);
 	const [loading, setLoading] = React.useState(plugin.loading._);
 	const [loadError, setLoadError] = React.useState(plugin.loadError._);
@@ -168,10 +170,11 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPl
 	);
 
 	// No chevron for a plugin with no Settings export, or one whose Settings render nothing.
-	if (!hasSettings || emptyPanel) return <LunaRow lead={lead} title={name} meta={meta} desc={desc} trailing={trailing} />;
+	if (!hasSettings || emptyPanel) return <LunaRow rootRef={rootRef} lead={lead} title={name} meta={meta} desc={desc} trailing={trailing} />;
 
 	return (
 		<LunaExpandableRow
+			rootRef={rootRef}
 			open={open}
 			onToggle={onToggle}
 			lead={lead}

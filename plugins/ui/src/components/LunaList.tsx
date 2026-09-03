@@ -49,6 +49,8 @@ export interface LunaRowProps {
 	compact?: boolean;
 	titleAttr?: string;
 	sx?: object;
+	/** Ref to the row's outer element, for scrolling a row into view after it moves. */
+	rootRef?: React.Ref<HTMLDivElement>;
 }
 
 const RowText = React.memo(({ title, desc, meta, titleAttr }: Pick<LunaRowProps, "title" | "desc" | "meta" | "titleAttr">) => (
@@ -62,8 +64,8 @@ const RowText = React.memo(({ title, desc, meta, titleAttr }: Pick<LunaRowProps,
 	</Box>
 ));
 
-export const LunaRow = React.memo(({ lead, title, desc, meta, trailing, compact, titleAttr, sx }: LunaRowProps) => (
-	<Box sx={{ ...rowSx, ...(compact ? { minHeight: metrics.rowHCompact } : null), ...sx }}>
+export const LunaRow = React.memo(({ lead, title, desc, meta, trailing, compact, titleAttr, sx, rootRef }: LunaRowProps) => (
+	<Box ref={rootRef} sx={{ ...rowSx, ...(compact ? { minHeight: metrics.rowHCompact } : null), ...sx }}>
 		<Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: metrics.leadSlot }} children={lead} />
 		<RowText title={title} desc={desc} meta={meta} titleAttr={titleAttr} />
 		<Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }} children={trailing} />
@@ -83,7 +85,7 @@ export interface LunaExpandableRowProps extends LunaRowProps {
  * so it is not used for expanding.
  */
 export const LunaExpandableRow = React.memo(
-	({ open, onToggle, panel, lead, title, desc, meta, trailing, titleAttr, sx }: LunaExpandableRowProps) => {
+	({ open, onToggle, panel, lead, title, desc, meta, trailing, titleAttr, sx, rootRef }: LunaExpandableRowProps) => {
 		const panelId = useId();
 		const headerId = useId();
 		const headerRef = useRef<HTMLDivElement>(null);
@@ -101,6 +103,7 @@ export const LunaExpandableRow = React.memo(
 
 		return (
 			<Box
+				ref={rootRef}
 				sx={{
 					"&:not(:first-of-type)": { borderTop: `1px solid ${wave.line}` },
 					backgroundColor: open ? wave.surfaceRaised : "transparent",
