@@ -128,17 +128,28 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 					// Installed cards say only what the button will do. The state itself is carried by
 					// the bloom on the card, so the button does not repeat it back as "Installed".
 					startIcon={busy ? null : installed ? <DeleteOutlineRounded sx={{ fontSize: 15 }} /> : <AddRounded sx={{ fontSize: 15 }} />}
-					sx={
-						installed
+					sx={{
+						...buttonSx,
+						...(installed
 							? {
-									...buttonSx,
 									backgroundColor: "transparent",
 									color: btnHover ? wave.danger : wave.textSecondary,
 									borderColor: btnHover ? wave.danger : wave.lineStrong,
-									"& .MuiButton-startIcon": { marginRight: 0.5 },
 								}
-							: { ...buttonSx, "& .MuiButton-startIcon": { marginRight: 0.5 } }
-					}
+							: null),
+						// The icon grows on hover and dips on press. Deliberately not a rotation: a
+						// plus has four-fold symmetry, so spinning it a quarter turn changes nothing
+						// on screen.
+						"& .MuiButton-startIcon": {
+							marginRight: 0.5,
+							transition: "transform 180ms cubic-bezier(0.2, 0, 0, 1)",
+						},
+						"&:hover .MuiButton-startIcon": { transform: installed ? "translateY(-1px) scale(1.1)" : "scale(1.25)" },
+						"&:active .MuiButton-startIcon": { transform: "scale(0.82)" },
+						"@media (prefers-reduced-motion: reduce)": {
+							"& .MuiButton-startIcon": { transition: "none" },
+						},
+					}}
 					children={busy ? (installed ? "Removing" : "Installing") : installed ? "Remove" : "Install"}
 				/>
 			</Stack>

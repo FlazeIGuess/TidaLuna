@@ -42,7 +42,8 @@ const LunaTabs = React.memo(({ value, onChange }: { value: LunaSettingsTab; onCh
 	}, [value]);
 
 	return (
-		<Box sx={{ position: "relative", display: "flex", gap: 0.5, borderBottom: `1px solid ${wave.line}` }}>
+		// maxWidth so the hairline stops where the content stops instead of overhanging to the right
+		<Box sx={{ position: "relative", display: "flex", gap: 0.5, maxWidth: metrics.maxTextW, borderBottom: `1px solid ${wave.line}` }}>
 			{TABS.map(({ value: tab, icon: Icon }) => {
 				const active = tab === value;
 				return (

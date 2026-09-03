@@ -85,13 +85,18 @@ export const LunaRow = React.memo(({ lead, title, desc, meta, trailing, compact,
 		onMouseEnter={onSeen}
 		sx={{
 			...rowSx,
+			// Without a lead glyph the status column is dead space that pushes the text off the
+			// group's left edge, so the row drops to two columns instead of reserving it
+			...(lead === undefined ? { gridTemplateColumns: "minmax(0, 1fr) auto" } : null),
 			...(compact ? { minHeight: metrics.rowHCompact } : null),
 			transition: "background-color 120ms linear, box-shadow 300ms ease",
 			...(highlight ? highlightSx : null),
 			...sx,
 		}}
 	>
-		<Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: metrics.leadSlot }} children={lead} />
+		{lead !== undefined && (
+			<Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", width: metrics.leadSlot }} children={lead} />
+		)}
 		<RowText title={title} desc={desc} meta={meta} titleAttr={titleAttr} />
 		<Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }} children={trailing} />
 	</Box>
