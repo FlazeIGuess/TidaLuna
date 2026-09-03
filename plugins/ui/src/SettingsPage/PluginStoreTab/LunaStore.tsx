@@ -19,6 +19,8 @@ import { metricsAreFresh, type RegistryStore } from "./registry";
 
 interface StorePackage extends PluginPackage {
 	plugins: string[];
+	/** Store wide download opt in, set once in the store repo's package.json */
+	showDownloads?: boolean;
 }
 
 interface LunaStoreProps {
@@ -142,7 +144,9 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 						// Cards side by side, wrapping to as many columns as the width allows
 						gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
 						gap: 1.5,
-						alignItems: "stretch",
+						// start, not stretch: one card with a preview would otherwise stretch every
+						// other card in its row and leave them with dead space
+						alignItems: "start",
 					}}
 				>
 					{filtered?.map((plugin) => (
@@ -150,6 +154,7 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 							key={plugin}
 							url={`${url}/${isLocalDevStore ? plugin : plugin.replaceAll(" ", ".")}`}
 							downloads={metrics?.downloads?.[plugin]}
+							storeShowDownloads={pkg?.showDownloads}
 						/>
 					))}
 				</Box>

@@ -16,6 +16,7 @@ import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
 
 import { buttonSx, clampSx, descSx, metaSx, titleSx, wave } from "../../tidalTokens";
+import { previewImageUrl, showDownloadsFor } from "./previewImage";
 
 const authorName = (author: unknown): string | undefined =>
 	typeof author === "string" ? author : ((author as { name?: string } | undefined)?.name ?? undefined);
@@ -27,13 +28,22 @@ const authorAvatar = (author: unknown): string | undefined =>
  * hairline not a glow, installed state is a glyph and a neutral border not a coloured one, and the
  * install control is a real button with a visible fill, not a pill or faint text.
  */
-export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; downloads?: number }) => {
+export interface LunaStorePluginProps {
+	url: string;
+	downloads?: number;
+	/** Store wide download opt in, overridden by the plugin's own flag */
+	storeShowDownloads?: boolean;
+}
+
+export const LunaStorePlugin = React.memo(({ url, downloads, storeShowDownloads }: LunaStorePluginProps) => {
 	const [plugin, setPlugin] = useState<LunaPlugin | undefined>(undefined);
 	const [loadError, setLoadError] = useState<string | undefined>(undefined);
 	const [installed, setInstalled] = useState(false);
 	const [busy, setBusy] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const [btnHover, setBtnHover] = useState(false);
+	// A broken or blocked image must leave the card exactly as it was without one
+	const [imageBroken, setImageBroken] = useState(false);
 
 	useEffect(() => {
 		LunaPlugin.fromStorage({ url })
@@ -56,6 +66,8 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 	const version = plugin.package?.version;
 	const author = authorName(plugin.package?.author);
 	const avatar = authorAvatar(plugin.package?.author);
+	const preview = imageBroken ? undefined : previewImageUrl(plugin.package?.image);
+	const showDownloads = showDownloadsFor(plugin.package?.showDownloads, storeShowDownloads);
 
 	const toggleInstall = async () => {
 		setBusy(true);
@@ -76,7 +88,10 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				flexDirection: "column",
 				gap: 1,
 				height: "100%",
-				padding: "14px",
+				// No padding on the card itself: a preview has to reach the edges. The padding moves
+				// onto the content wrapper below.
+				padding: 0,
+				overflow: "hidden",
 				borderRadius: wave.radius,
 				backgroundColor: hovered ? wave.surfaceRaised : wave.surface,
 				// Installed state gets exactly two cues, of two different kinds: an ambient accent
@@ -89,6 +104,19 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				transition: "background-color .15s ease",
 			}}
 		>
+			{preview !== undefined && (
+				<Box
+					component="img"
+					src={preview}
+					alt=""
+					loading="lazy"
+					decoding="async"
+					referrerPolicy="no-referrer"
+					onError={() => setImageBroken(true)}
+					sx={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", display: "block", flexShrink: 0 }}
+				/>
+			)}
+			<Box sx={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1, padding: "14px" }}>
 			<Stack direction="row" spacing={1} sx={{ alignItems: "flex-start", minWidth: 0 }}>
 				{loadError !== undefined && <ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger, flexShrink: 0, marginTop: "2px" }} />}
 				<Tooltip title={plugin.name} placement="top-start">
@@ -110,7 +138,7 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 					</Stack>
 				)}
 				<Box sx={{ flexGrow: 1 }} />
-				{downloads !== undefined && downloads > 0 && (
+				{showDownloads && downloads !== undefined && downloads > 0 && (
 					<Tooltip title={`${downloads.toLocaleString()} downloads`} placement="top">
 						<Stack direction="row" spacing={0.375} sx={{ alignItems: "center", flexShrink: 0, color: wave.textTertiary }}>
 							<DownloadRounded sx={{ fontSize: 13 }} />
@@ -155,7 +183,8 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 					}}
 					children={busy ? (installed ? "Removing" : "Installing") : installed ? "Remove" : "Install"}
 				/>
-			</Stack>
+				</Stack>
+			</Box>
 		</Box>
 	);
 });

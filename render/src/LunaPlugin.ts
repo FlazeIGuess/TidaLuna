@@ -32,6 +32,16 @@ export type PluginPackage = {
 	};
 	description?: React.ReactNode;
 	version?: string;
+	/**
+	 * Optional preview image for the plugin store, one per plugin. Must be an https url on a GitHub
+	 * host, see isAllowedPreviewImage. Plugins without one keep the plain card.
+	 */
+	image?: string;
+	/**
+	 * Opt in to showing this plugin's download count in the store. Off unless the author sets it,
+	 * either here or once for a whole store in the store's own package.json.
+	 */
+	showDownloads?: boolean;
 	dependencies?: string[];
 	devDependencies?: string[];
 	code?: string;
