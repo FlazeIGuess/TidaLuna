@@ -16,8 +16,12 @@ import { pkg, relaunch, update, needsElevation, runElevatedInstall } from "plugi
 export const version = (await pkg()).version;
 
 import { useConfirm } from "material-ui-confirm";
-import { LunaButton, LunaSettings, SpinningButton } from "../../components";
-import { buttonSx, wave } from "../../tidalTokens";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import RefreshRounded from "@mui/icons-material/RefreshRounded";
+
+import { LunaGroup, LunaRow, LunaSection } from "../../components/LunaList";
+import { buttonSx, iconBtnSx, selectSx, wave } from "../../tidalTokens";
 
 export const fetchReleases = () => ftch.json<GitHubRelease[]>("https://api.github.com/repos/Inrixia/TidaLuna/releases");
 
@@ -50,12 +54,12 @@ export const LunaClientUpdate = React.memo(() => {
 	}
 
 	return (
-		<LunaSettings
-			title="Client Updates"
-			titleChildren={<SpinningButton title="Fetch releases" loading={loading} onClick={updateReleases} />}
-			direction="row"
-			alignItems="center"
-			pb={4}
+		<LunaSection
+			title="Client updates"
+			desc="Install another TidaLuna release, or reinstall the current one."
+			trailing={
+				<IconButton disableRipple disabled={loading} onClick={updateReleases} title="Fetch releases" sx={iconBtnSx} children={<RefreshRounded />} />
+			}
 		>
 			<Dialog open={!!busy}>
 				<DialogTitle>Operation in progress</DialogTitle>
@@ -63,20 +67,31 @@ export const LunaClientUpdate = React.memo(() => {
 					<DialogContentText>Please do not close the application. It will restart automatically.</DialogContentText>
 				</DialogContent>
 			</Dialog>
-			<Select
-				fullWidth
-				sx={{ flex: 1, height: 36 }}
-				value={selectedRelease}
-				onChange={(e) => setSelectedRelease(e.target.value)}
-				children={releases.map((release) => {
-					return <MenuItem value={release.tag_name}>{`${release.tag_name}${release.prerelease ? "-dev" : ""}`}</MenuItem>;
-				})}
+			<LunaGroup>
+			<LunaRow
+				title="Release"
+				desc="Which build to install."
+				trailing={
+					<Select
+						size="small"
+						sx={{ ...selectSx, minWidth: 200 }}
+						value={selectedRelease}
+						onChange={(e) => setSelectedRelease(e.target.value)}
+						children={releases.map((release) => (
+							<MenuItem key={release.tag_name} value={release.tag_name}>{`${release.tag_name}${release.prerelease ? "-dev" : ""}`}</MenuItem>
+						))}
+					/>
+				}
 			/>
-			<LunaButton
-				sx={{ ...buttonSx, height: 36, marginLeft: 1.5 }}
+			<LunaRow
+				title={action}
+				desc={desc}
+				trailing={
+			<Button
+				disableRipple
+				sx={buttonSx}
 				disabled={!!busy}
 				children={action}
-				title={desc}
 				onClick={async () => {
 					const result = await confirm({ title: action, description: desc, confirmationText: action });
 					if (!result.confirmed) return;
@@ -124,8 +139,15 @@ export const LunaClientUpdate = React.memo(() => {
 					await relaunch();
 				}}
 			/>
-			<LunaButton
-				sx={{ ...buttonSx, height: 36, marginLeft: 1, backgroundColor: "transparent", color: wave.danger, "&:hover": { backgroundColor: wave.line } }}
+				}
+			/>
+			<LunaRow
+				title="Factory reset"
+				desc="Deletes every plugin and all Luna configuration, then restarts."
+				trailing={
+			<Button
+				disableRipple
+				sx={{ ...buttonSx, backgroundColor: "transparent", color: wave.danger, borderColor: wave.lineStrong, "&:hover": { backgroundColor: wave.line, borderColor: wave.danger } }}
 				disabled={!!busy}
 				children={"Factory Reset"}
 				title={"Warning! This will reset luna to a clean install with no plugins."}
@@ -148,6 +170,9 @@ export const LunaClientUpdate = React.memo(() => {
 					await relaunch();
 				}}
 			/>
-		</LunaSettings>
+				}
+			/>
+			</LunaGroup>
+		</LunaSection>
 	);
 });

@@ -7,7 +7,7 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import { useTheme } from "@mui/material/styles";
 import TextField, { type TextFieldProps } from "@mui/material/TextField";
 
-import { inputSx } from "../tidalTokens";
+import { inputSx, wave } from "../tidalTokens";
 
 export type LunaNumberProps = TextFieldProps & {
 	min?: number;
@@ -58,14 +58,27 @@ export const LunaNumber = React.memo((props: LunaNumberProps) => {
 				},
 			}}
 			onChange={(e) => onNumber(e.target.value)}
-			inputProps={{
-				style: { textAlign: "center" },
-			}}
 			value={number}
 			{...props}
+			// After the spread, so a caller cannot accidentally drop the centering again
+			inputProps={{ style: { textAlign: "center", padding: 0 } }}
 			sx={{
 				width: 128,
 				...inputSx,
+				// The notched outline draws its own corners; without this it keeps the MUI default
+				// radius and sits visibly inside the filled corners
+				"& .MuiOutlinedInput-root": {
+					...(inputSx as any)["& .MuiOutlinedInput-root"],
+					borderRadius: wave.radiusSmall,
+					// Zeroing the input padding to centre the value also collapsed the field, so the
+					// height lives on the root instead
+					height: 32,
+					paddingLeft: 1,
+					paddingRight: 1,
+					"& .MuiOutlinedInput-notchedOutline": { borderRadius: wave.radiusSmall },
+				},
+				// The value sits between two adornments, so it needs to flex to centre between them
+				"& .MuiInputBase-input": { textAlign: "center", padding: 0, flex: 1 },
 				...props.sx,
 			}}
 		/>

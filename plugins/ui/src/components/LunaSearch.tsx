@@ -31,18 +31,19 @@ export const LunaSearch = React.memo(({ value, onChange, placeholder = "Search",
 			display: "flex",
 			alignItems: "center",
 			gap: 1,
-			height: 40,
+			// Copied from Tidal's own search field so the two read as one control: same height,
+			// same radius, same translucent fill over the same blur, and no border. The border was
+			// what made this look like a box sitting on top of the page.
+			height: 36,
 			paddingX: 1.75,
-			borderRadius: 9999,
+			borderRadius: "36px",
 			color: wave.text,
-			// Glassmorphism: a translucent tint over a blur, so the list shows through when stuck
-			backgroundColor: `color-mix(in srgb, ${wave.surface} 62%, transparent)`,
-			backdropFilter: "blur(16px) saturate(160%)",
-			WebkitBackdropFilter: "blur(16px) saturate(160%)",
-			border: `1px solid ${wave.line}`,
-			transition: "border-color .15s ease, box-shadow .15s ease",
-			"&:hover": { borderColor: wave.lineStrong },
-			"&:focus-within": { borderColor: wave.accent, boxShadow: `0 0 0 1px ${wave.accent}` },
+			backgroundColor: "rgba(40, 40, 40, 0.75)",
+			backdropFilter: "blur(20px) saturate(1.8)",
+			WebkitBackdropFilter: "blur(20px) saturate(1.8)",
+			border: "none",
+			transition: "box-shadow .15s ease",
+			"&:focus-within": { boxShadow: `0 0 0 1px ${wave.accent}` },
 		}}
 	>
 		<SearchRounded sx={{ fontSize: 18, color: wave.textTertiary, flexShrink: 0 }} />

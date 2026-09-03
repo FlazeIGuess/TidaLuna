@@ -3,11 +3,11 @@ import React, { useLayoutEffect, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 
-import ExtensionIcon from "@mui/icons-material/Extension";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import PaletteIcon from "@mui/icons-material/Palette";
-import SettingsIcon from "@mui/icons-material/Settings";
-import StorefrontIcon from "@mui/icons-material/Storefront";
+import ExtensionIcon from "@mui/icons-material/ExtensionOutlined";
+import FavoriteIcon from "@mui/icons-material/FavoriteBorderRounded";
+import PaletteIcon from "@mui/icons-material/PaletteOutlined";
+import SettingsIcon from "@mui/icons-material/TuneRounded";
+import StorefrontIcon from "@mui/icons-material/StorefrontOutlined";
 
 import { Signal } from "@inrixia/helpers";
 import { metrics, wave } from "../tidalTokens";

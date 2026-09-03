@@ -11,12 +11,10 @@ import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
 import AddRounded from "@mui/icons-material/AddRounded";
-import CheckRounded from "@mui/icons-material/CheckRounded";
 import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
 import DownloadRounded from "@mui/icons-material/DownloadRounded";
 import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
 
-import { LunaBadge } from "../../components/LunaList";
 import { buttonSx, clampSx, descSx, metaSx, titleSx, wave } from "../../tidalTokens";
 
 const authorName = (author: unknown): string | undefined =>
@@ -81,10 +79,14 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				padding: "14px",
 				borderRadius: wave.radius,
 				backgroundColor: hovered ? wave.surfaceRaised : wave.surface,
-				// Installed cards carry an accent left bar so the state reads at a glance across the grid,
-				// on top of the check glyph and the button label. Everything else keeps a neutral border.
 				border: `1px solid ${wave.line}`,
-				boxShadow: installed ? `inset 3px 0 0 ${wave.accent}` : "none",
+				// Installed state gets exactly two cues, of two different kinds: an ambient accent
+				// bloom off the left edge that reads across a whole grid at a glance, and a button
+				// that names the action. No badge, no check, no coloured border stacked on top -
+				// three stickers all saying "installed" is what made it look generated.
+				backgroundImage: installed
+					? `linear-gradient(100deg, color-mix(in srgb, ${wave.accent} 16%, transparent) 0%, transparent 58%)`
+					: "none",
 				transition: "background-color .15s ease",
 			}}
 		>
@@ -93,7 +95,6 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				<Tooltip title={plugin.name} placement="top-start">
 					<Typography sx={{ ...titleSx, ...clampSx(2), flex: 1, minWidth: 0, overflowWrap: "anywhere" }} children={plugin.name} />
 				</Tooltip>
-				{installed && <LunaBadge tone="neutral" children="Installed" />}
 				{version && <Typography sx={{ ...metaSx, flex: "0 0 auto", paddingTop: "1px" }} children={version} />}
 			</Stack>
 
@@ -124,13 +125,9 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 					onClick={toggleInstall}
 					onMouseEnter={() => setBtnHover(true)}
 					onMouseLeave={() => setBtnHover(false)}
-					startIcon={
-						busy ? null : installed ? (
-							btnHover ? <DeleteOutlineRounded sx={{ fontSize: 15 }} /> : <CheckRounded sx={{ fontSize: 15 }} />
-						) : (
-							<AddRounded sx={{ fontSize: 15 }} />
-						)
-					}
+					// Installed cards say only what the button will do. The state itself is carried by
+					// the bloom on the card, so the button does not repeat it back as "Installed".
+					startIcon={busy ? null : installed ? <DeleteOutlineRounded sx={{ fontSize: 15 }} /> : <AddRounded sx={{ fontSize: 15 }} />}
 					sx={
 						installed
 							? {
@@ -142,7 +139,7 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 								}
 							: { ...buttonSx, "& .MuiButton-startIcon": { marginRight: 0.5 } }
 					}
-					children={busy ? (installed ? "Removing" : "Installing") : installed ? (btnHover ? "Remove" : "Installed") : "Install"}
+					children={busy ? (installed ? "Removing" : "Installing") : installed ? "Remove" : "Install"}
 				/>
 			</Stack>
 		</Box>
