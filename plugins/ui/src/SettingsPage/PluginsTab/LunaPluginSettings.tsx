@@ -18,7 +18,7 @@ import MoreVertRounded from "@mui/icons-material/MoreVertRounded";
 import RadioButtonUncheckedRounded from "@mui/icons-material/RadioButtonUncheckedRounded";
 
 import { LunaSwitch } from "../../components";
-import { LunaBadge, LunaExpandableRow, LunaRow } from "../../components/LunaList";
+import { LunaBadge, LunaExpandableRow, LunaRow, MeasureEmpty } from "../../components/LunaList";
 import { buttonSx, descSx, iconBtnSx, metaSx, oneLineSx, wave } from "../../tidalTokens";
 
 class PluginSettingsErrorBoundary extends React.Component<{ name: string; children: ReactNode }, { error?: string }> {
@@ -60,6 +60,9 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPl
 	const [installed, setInstalled] = React.useState(plugin.installed);
 	const [pkg, setPackage] = React.useState<PluginPackage>(obyStore.unwrap(plugin.store.package));
 	const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
+	// A Settings export can render nothing but spacers. Detected after render, then the row drops
+	// its chevron rather than opening onto an empty panel.
+	const [emptyPanel, setEmptyPanel] = React.useState(false);
 
 	React.useEffect(() => {
 		const unloads = new Set([
@@ -164,9 +167,8 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPl
 		</>
 	);
 
-	// Only plugins that export Settings get a chevron and a panel. A plain row otherwise, so the
-	// affordance never promises a panel that would just read "no settings".
-	if (!hasSettings) return <LunaRow lead={lead} title={name} meta={meta} desc={desc} trailing={trailing} />;
+	// No chevron for a plugin with no Settings export, or one whose Settings render nothing.
+	if (!hasSettings || emptyPanel) return <LunaRow lead={lead} title={name} meta={meta} desc={desc} trailing={trailing} />;
 
 	return (
 		<LunaExpandableRow
@@ -177,7 +179,11 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPl
 			meta={meta}
 			desc={desc}
 			trailing={trailing}
-			panel={<PluginSettingsErrorBoundary name={name} children={<Settings />} />}
+			panel={
+				<PluginSettingsErrorBoundary name={name}>
+					<MeasureEmpty onResult={setEmptyPanel} children={<Settings />} />
+				</PluginSettingsErrorBoundary>
+			}
 		/>
 	);
 });

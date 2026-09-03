@@ -1,4 +1,4 @@
-import React, { useCallback, useId, useRef, type PropsWithChildren, type ReactNode } from "react";
+import React, { useCallback, useId, useLayoutEffect, useRef, type PropsWithChildren, type ReactNode } from "react";
 
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
@@ -183,6 +183,22 @@ export const LunaExpandableRow = React.memo(
 		);
 	},
 );
+
+/**
+ * Renders children and reports whether they produced any visible content. A plugin can export a
+ * Settings component that renders only spacers, and an accordion onto nothing is worse than no
+ * accordion. useLayoutEffect fires before paint, so a row found empty never shows a chevron frame.
+ */
+export const MeasureEmpty = React.memo(({ onResult, children }: PropsWithChildren<{ onResult: (empty: boolean) => void }>) => {
+	const ref = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		const el = ref.current;
+		if (!el) return;
+		const meaningful = el.querySelector("input,button,select,textarea,a,svg,img,[role],label,h1,h2,h3,h4,h5,h6,p") !== null;
+		onResult(!meaningful && el.textContent!.trim() === "");
+	});
+	return <Box ref={ref} children={children} />;
+});
 
 /** Genuine state only: Archived, Unreachable, Disabled, Needs reload. At most one per row. */
 export const LunaBadge = React.memo(({ children, tone }: PropsWithChildren<{ tone?: "neutral" | "warning" | "danger" }>) => (
