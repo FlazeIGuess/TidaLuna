@@ -66,7 +66,8 @@ export const metaSx = { fontFamily: wave.font, fontSize: 11, fontWeight: 500, co
 /** The one container. Opaque, lighter than the page, hairline, no shadow. */
 export const groupSx = {
 	backgroundColor: wave.surface,
-	border: `1px solid ${wave.line}`,
+	// No border: its right edge read as a stray vertical line, and the fill already separates the
+	// group from the black page on its own.
 	borderRadius: wave.radius,
 	// So the first and last row inherit the rounded corners
 	overflow: "hidden",

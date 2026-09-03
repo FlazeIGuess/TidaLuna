@@ -79,7 +79,6 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				padding: "14px",
 				borderRadius: wave.radius,
 				backgroundColor: hovered ? wave.surfaceRaised : wave.surface,
-				border: `1px solid ${wave.line}`,
 				// Installed state gets exactly two cues, of two different kinds: an ambient accent
 				// bloom off the left edge that reads across a whole grid at a glance, and a button
 				// that names the action. No badge, no check, no coloured border stacked on top -
@@ -137,15 +136,19 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 									borderColor: btnHover ? wave.danger : wave.lineStrong,
 								}
 							: null),
-						// The icon grows on hover and dips on press. Deliberately not a rotation: a
-						// plus has four-fold symmetry, so spinning it a quarter turn changes nothing
-						// on screen.
+						// The plus turns a full revolution on its own axis on hover, and dips on press.
+						// A whole turn, not a quarter: a plus is four-fold symmetric, so 90deg lands on an
+						// identical shape and only a full spin actually shows movement.
 						"& .MuiButton-startIcon": {
 							marginRight: 0.5,
-							transition: "transform 180ms cubic-bezier(0.2, 0, 0, 1)",
+							// The resting transform is spelled out with the same function list as the
+							// hover one. Going from "none" to rotate(360deg) interpolates as a matrix,
+							// and a 360deg matrix decomposes back to 0deg, so the spin never happens.
+							transform: installed ? "translateY(0px) scale(1)" : "rotate(0deg) scale(1)",
+							transition: "transform 420ms cubic-bezier(0.2, 0, 0, 1)",
 						},
-						"&:hover .MuiButton-startIcon": { transform: installed ? "translateY(-1px) scale(1.1)" : "scale(1.25)" },
-						"&:active .MuiButton-startIcon": { transform: "scale(0.82)" },
+						"&:hover .MuiButton-startIcon": { transform: installed ? "translateY(-1px) scale(1.1)" : "rotate(360deg) scale(1.15)" },
+						"&:active .MuiButton-startIcon": { transform: installed ? "translateY(0px) scale(0.82)" : "rotate(360deg) scale(0.82)" },
 						"@media (prefers-reduced-motion: reduce)": {
 							"& .MuiButton-startIcon": { transition: "none" },
 						},
