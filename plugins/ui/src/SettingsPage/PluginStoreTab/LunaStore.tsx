@@ -73,7 +73,8 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 
 	return (
 		<Box component="section" sx={{ fontFamily: wave.font, display: "flex", flexDirection: "column", gap: 1.5 }}>
-			<Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+			{/* alignItems as a prop does not survive here, it computes to normal and everything stretches */}
+			<Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: "center" }}>
 				<Tooltip title={url} placement="top-start">
 					<Typography
 						component="a"

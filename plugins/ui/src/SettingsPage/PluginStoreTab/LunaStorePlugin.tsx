@@ -84,9 +84,9 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				"&:focus-visible": { outline: `2px solid ${wave.accent}`, outlineOffset: 2 },
 			}}
 		>
-			<Stack direction="row" alignItems="flex-start" spacing={1}>
+			<Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
 				<Tooltip title={plugin.name} placement="top-start">
-					<Typography sx={{ ...titleSx, ...clamp(2), flex: 1, minWidth: 0 }} children={plugin.name} />
+					<Typography sx={{ ...titleSx, ...clamp(2), flex: 1, minWidth: 0, overflowWrap: "anywhere" }} children={plugin.name} />
 				</Tooltip>
 				{version && (
 					<Typography
@@ -101,9 +101,9 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 				children={loadError ?? plugin.package?.description ?? "No description"}
 			/>
 
-			<Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+			<Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: "center" }}>
 				{name && (
-					<Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0, flexShrink: 1 }}>
+					<Stack direction="row" spacing={0.75} sx={{ minWidth: 0, flexShrink: 1, alignItems: "center" }}>
 						{avatar && <Avatar src={avatar} sx={{ width: 18, height: 18 }} />}
 						<Typography
 							sx={{ ...descSx, color: wave.textTertiary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
@@ -125,6 +125,10 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 						...descSx,
 						flex: "0 0 auto",
 						fontWeight: 600,
+						// Fixed width so Install and Installed occupy the same space and the
+						// download counts line up from card to card
+						minWidth: 62,
+						textAlign: "center",
 						paddingX: 1,
 						paddingY: "3px",
 						borderRadius: wave.radiusPill,

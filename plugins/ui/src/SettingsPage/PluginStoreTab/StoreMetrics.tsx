@@ -12,9 +12,10 @@ const badgeSx = {
 	alignSelf: "center",
 	flex: "0 0 auto",
 	gap: 0.5,
-	height: 20,
+	height: 18,
 	lineHeight: 1,
-	fontSize: "0.7rem",
+	// px, not rem: Tidal sets the root font size to 14px so 0.7rem resolved to 9.8px
+	fontSize: 11,
 	fontVariantNumeric: "tabular-nums",
 	color: "rgba(255, 255, 255, 0.75)",
 	backgroundColor: "rgba(255, 255, 255, 0.08)",
