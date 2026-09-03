@@ -25,7 +25,10 @@ export const PluginStoreTab = React.memo(() => {
 		// Any of the three can change the visible list, the registry from a fetch and the other two from the user
 		const unloads = new Set([obyStore.on(registryStores, update), obyStore.on(userStoreUrls, update), obyStore.on(hiddenStoreUrls, update)]);
 		refreshRegistry().catch((err) => console.error("[PluginStore] Failed to refresh registry:", err));
-		return () => unloadSet(unloads);
+		// Block body on purpose, unloadSet is async and React rejects a Promise as cleanup
+		return () => {
+			unloadSet(unloads);
+		};
 	}, []);
 
 	const onRemove = useCallback((storeUrl: string) => removeStore(storeUrl), []);
