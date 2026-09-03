@@ -5,6 +5,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 
 import { type LunaTitleValues } from "../LunaTitle";
+import { selectSx } from "../../tidalTokens";
 import { LunaSetting } from "./LunaSetting";
 
 // Make the props generic
@@ -13,7 +14,7 @@ function _LunaSelectSetting<T = unknown>(props: LunaSelectSettingProps<T>) {
 	const { title, desc, ...selectProps } = props;
 	return (
 		<LunaSetting title={title} desc={desc}>
-			<Select<T> size="small" fullWidth {...selectProps} />
+			<Select<T> size="small" fullWidth {...selectProps} sx={{ ...selectSx, ...selectProps.sx }} />
 		</LunaSetting>
 	);
 }

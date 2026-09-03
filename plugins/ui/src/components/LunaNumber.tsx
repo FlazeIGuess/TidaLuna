@@ -7,6 +7,8 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import { useTheme } from "@mui/material/styles";
 import TextField, { type TextFieldProps } from "@mui/material/TextField";
 
+import { inputSx } from "../tidalTokens";
+
 export type LunaNumberProps = TextFieldProps & {
 	min?: number;
 	max?: number;
@@ -63,6 +65,7 @@ export const LunaNumber = React.memo((props: LunaNumberProps) => {
 			{...props}
 			sx={{
 				width: 128,
+				...inputSx,
 				...props.sx,
 			}}
 		/>

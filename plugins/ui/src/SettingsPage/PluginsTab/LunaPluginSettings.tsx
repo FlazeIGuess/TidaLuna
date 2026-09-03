@@ -18,7 +18,7 @@ import MoreVertRounded from "@mui/icons-material/MoreVertRounded";
 import RadioButtonUncheckedRounded from "@mui/icons-material/RadioButtonUncheckedRounded";
 
 import { LunaSwitch } from "../../components";
-import { LunaBadge, LunaExpandableRow } from "../../components/LunaList";
+import { LunaBadge, LunaExpandableRow, LunaRow } from "../../components/LunaList";
 import { buttonSx, descSx, iconBtnSx, metaSx, oneLineSx, wave } from "../../tidalTokens";
 
 class PluginSettingsErrorBoundary extends React.Component<{ name: string; children: ReactNode }, { error?: string }> {
@@ -100,76 +100,84 @@ export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPl
 		fn();
 	};
 
+	const lead = loadError ? (
+		<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />
+	) : enabled ? (
+		<CheckCircleRounded sx={{ fontSize: 16, color: wave.textSecondary }} />
+	) : (
+		<RadioButtonUncheckedRounded sx={{ fontSize: 16, color: wave.textTertiary }} />
+	);
+
+	const meta = (
+		<>
+			{pkg.version && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={pkg.version} />}
+			{isDev && <LunaBadge children="Dev" />}
+			{!enabled && !loadError && <LunaBadge children="Disabled" />}
+			{loadError && <LunaBadge tone="danger" children="Load failed" />}
+		</>
+	);
+
+	const desc = loadError ? (
+		<Typography title={loadError} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={loadError} />
+	) : (
+		(pkg.description ?? "No description")
+	);
+
+	const trailing = (
+		<>
+			{author && <Typography sx={{ ...metaSx, display: { xs: "none", sm: "block" } }} children={author} />}
+			{!isCore && (
+				<Tooltip title={enabled ? `Disable ${name}` : `Enable ${name}`}>
+					<span onClick={(e) => e.stopPropagation()}>
+						<LunaSwitch checked={enabled} loading={loading} onChange={toggleEnabled} />
+					</span>
+				</Tooltip>
+			)}
+			<IconButton
+				disableRipple
+				aria-label={`More actions for ${name}`}
+				sx={iconBtnSx}
+				onClick={(e) => {
+					e.stopPropagation();
+					setMenuAnchor(e.currentTarget);
+				}}
+				children={<MoreVertRounded />}
+			/>
+			<Menu
+				anchorEl={menuAnchor}
+				open={menuAnchor !== null}
+				onClose={closeMenu}
+				slotProps={{ paper: { sx: { backgroundColor: wave.surfaceRaised, border: `1px solid ${wave.line}`, boxShadow: "none" } } }}
+			>
+				<MenuItem sx={descSx} onClick={run(handleReload)} children="Reload" />
+				{isDev && (
+					<MenuItem
+						sx={descSx}
+						onClick={run(() => (plugin.store.liveReload = !plugin.store.liveReload))}
+						children={plugin.store.liveReload ? "Live reload: on" : "Live reload: off"}
+					/>
+				)}
+				{link && <MenuItem sx={descSx} onClick={run(() => window.open(link, "_blank"))} children="Open homepage" />}
+				<MenuItem sx={descSx} onClick={run(() => navigator.clipboard?.writeText(plugin.store.url))} children="Copy URL" />
+				{!isCore && <MenuItem sx={{ ...descSx, color: wave.danger }} onClick={run(uninstall)} children="Uninstall" />}
+			</Menu>
+		</>
+	);
+
+	// Only plugins that export Settings get a chevron and a panel. A plain row otherwise, so the
+	// affordance never promises a panel that would just read "no settings".
+	if (!hasSettings) return <LunaRow lead={lead} title={name} meta={meta} desc={desc} trailing={trailing} />;
+
 	return (
 		<LunaExpandableRow
 			open={open}
 			onToggle={onToggle}
-			lead={
-				loadError ? (
-					<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />
-				) : enabled ? (
-					<CheckCircleRounded sx={{ fontSize: 16, color: wave.textSecondary }} />
-				) : (
-					<RadioButtonUncheckedRounded sx={{ fontSize: 16, color: wave.textTertiary }} />
-				)
-			}
+			lead={lead}
 			title={name}
-			meta={
-				<>
-					{pkg.version && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={pkg.version} />}
-					{isDev && <LunaBadge children="Dev" />}
-					{!enabled && !loadError && <LunaBadge children="Disabled" />}
-					{loadError && <LunaBadge tone="danger" children="Load failed" />}
-				</>
-			}
-			desc={loadError ? <Typography title={loadError} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={loadError} /> : (pkg.description ?? "No description")}
-			trailing={
-				<>
-					{author && <Typography sx={{ ...metaSx, display: { xs: "none", sm: "block" } }} children={author} />}
-					{!isCore && (
-						<Tooltip title={enabled ? `Disable ${name}` : `Enable ${name}`}>
-							<span onClick={(e) => e.stopPropagation()}>
-								<LunaSwitch checked={enabled} loading={loading} onChange={toggleEnabled} />
-							</span>
-						</Tooltip>
-					)}
-					<IconButton
-						disableRipple
-						aria-label={`More actions for ${name}`}
-						sx={iconBtnSx}
-						onClick={(e) => {
-							e.stopPropagation();
-							setMenuAnchor(e.currentTarget);
-						}}
-						children={<MoreVertRounded />}
-					/>
-					<Menu
-						anchorEl={menuAnchor}
-						open={menuAnchor !== null}
-						onClose={closeMenu}
-						slotProps={{ paper: { sx: { backgroundColor: wave.surfaceRaised, border: `1px solid ${wave.line}`, boxShadow: "none" } } }}
-					>
-						<MenuItem sx={descSx} onClick={run(handleReload)} children="Reload" />
-						{isDev && (
-							<MenuItem
-								sx={descSx}
-								onClick={run(() => (plugin.store.liveReload = !plugin.store.liveReload))}
-								children={plugin.store.liveReload ? "Live reload: on" : "Live reload: off"}
-							/>
-						)}
-						{link && <MenuItem sx={descSx} onClick={run(() => window.open(link, "_blank"))} children="Open homepage" />}
-						<MenuItem sx={descSx} onClick={run(() => navigator.clipboard?.writeText(plugin.store.url))} children="Copy URL" />
-						{!isCore && <MenuItem sx={{ ...descSx, color: wave.danger }} onClick={run(uninstall)} children="Uninstall" />}
-					</Menu>
-				</>
-			}
-			panel={
-				hasSettings ? (
-					<PluginSettingsErrorBoundary name={name} children={<Settings />} />
-				) : (
-					<Typography sx={{ ...metaSx, paddingY: 1 }} children="This plugin has no settings." />
-				)
-			}
+			meta={meta}
+			desc={desc}
+			trailing={trailing}
+			panel={<PluginSettingsErrorBoundary name={name} children={<Settings />} />}
 		/>
 	);
 });

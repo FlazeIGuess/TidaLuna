@@ -123,21 +123,38 @@ export const buttonSx = {
 	"&.Mui-disabled": { color: wave.textTertiary, backgroundColor: wave.surface, borderColor: wave.line },
 } as const;
 
-/** A text field that looks like Tidal's own, not a bare MUI outline on black */
+// Controls fill with surfaceHover, the lightest surface, so they stay visibly lighter than the
+// page AND the raised panel they sit inside. Filling with wave.surface made them darker than an
+// expanded panel and they vanished. Border is the strong hairline so the edge reads without focus.
+
+/** For TextField wrappers: the sx targets the inner OutlinedInput. */
 export const inputSx = {
 	"& .MuiOutlinedInput-root": {
 		fontFamily: wave.font,
 		fontSize: 14,
 		color: wave.text,
-		backgroundColor: wave.surface,
+		backgroundColor: wave.surfaceHover,
 		borderRadius: wave.radiusSmall,
-		"& fieldset": { borderColor: wave.line },
-		"&:hover fieldset": { borderColor: wave.lineStrong },
+		"& fieldset": { borderColor: wave.lineStrong },
+		"&:hover fieldset": { borderColor: wave.textTertiary },
 		"&.Mui-focused fieldset": { borderColor: wave.accent, borderWidth: 1 },
 	},
 	"& .MuiOutlinedInput-input::placeholder": { color: wave.textTertiary, opacity: 1 },
 	"& .MuiInputLabel-root": { fontFamily: wave.font, fontSize: 14, color: wave.textTertiary },
 	"& .MuiInputLabel-root.Mui-focused": { color: wave.accent },
+} as const;
+
+/** For a MUI Select, whose sx lands on the OutlinedInput root itself. */
+export const selectSx = {
+	fontFamily: wave.font,
+	fontSize: 14,
+	color: wave.text,
+	backgroundColor: wave.surfaceHover,
+	borderRadius: wave.radiusSmall,
+	"& .MuiOutlinedInput-notchedOutline": { borderColor: wave.lineStrong },
+	"&:hover .MuiOutlinedInput-notchedOutline": { borderColor: wave.textTertiary },
+	"&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: wave.accent, borderWidth: 1 },
+	"& .MuiSvgIcon-root": { color: wave.textSecondary },
 } as const;
 
 /** One line, ellipsis, full text belongs in a title attribute. Fixed row height depends on this. */
