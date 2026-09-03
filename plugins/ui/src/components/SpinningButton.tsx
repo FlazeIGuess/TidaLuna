@@ -40,7 +40,8 @@ export const SpinningButton = ({ spin, ...props }: SpinningButtonProps) => {
 			title={props.title}
 			children={
 				<IconButton
-					color="warning"
+					disableRipple
+					sx={{ color: "var(--wave-color-text-secondary, #afafb6)", "&:hover": { color: "var(--wave-color-text-main, #fff)", backgroundColor: "var(--wave-color-opacity-contrast-fill-ultra-thin, #ffffff1a)" }, "& svg": { fontSize: 18 } }}
 					{...props}
 					onClick={(...args) => {
 						setIsSpinning(true);

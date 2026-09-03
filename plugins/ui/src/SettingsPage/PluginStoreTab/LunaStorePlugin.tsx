@@ -3,39 +3,36 @@ import { store as obyStore } from "oby";
 
 import React, { useEffect, useState } from "react";
 
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
+import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 
-import { clamp, descSx, titleSx, wave } from "./tidalTokens";
+import CheckRounded from "@mui/icons-material/CheckRounded";
+import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
 
-const DEV_PREFIX = "http://127.0.0.1";
+import { LunaRow } from "../../components/LunaList";
+import { buttonSx, metaSx, oneLineSx, wave } from "../../tidalTokens";
 
-// Angle bracket casts are JSX in a .tsx file, so these use "as"
 const authorName = (author: unknown): string | undefined =>
 	typeof author === "string" ? author : ((author as { name?: string } | undefined)?.name ?? undefined);
-const authorAvatar = (author: unknown): string | undefined =>
-	typeof author === "string" ? undefined : ((author as { avatarUrl?: string } | undefined)?.avatarUrl ?? undefined);
 
 /**
- * One plugin in the store grid. Deliberately not built on LunaPluginHeader: that component packs
- * name, version, badges and author into a single row, which works in the wide plugins tab and
- * falls apart in a grid column, wrapping the author and squeezing the name to three characters.
- * Here the card is three stacked rows instead, so nothing competes for the same horizontal space.
+ * One plugin in a store, as a row. Not a card: every plugin carries the same field set, and a
+ * grid of boxes forces the eye to re-find each field at a new position on every item. In a row
+ * list the name, the download count and the action land in the same column every time.
  */
 export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; downloads?: number }) => {
 	const [plugin, setPlugin] = useState<LunaPlugin | undefined>(undefined);
 	const [loadError, setLoadError] = useState<string | undefined>(undefined);
 	const [installed, setInstalled] = useState(false);
-	const [hovered, setHovered] = useState(false);
+	const [busy, setBusy] = useState(false);
 
 	useEffect(() => {
-		LunaPlugin.fromStorage({ url }).then(setPlugin).catch(setLoadError);
+		LunaPlugin.fromStorage({ url })
+			.then(setPlugin)
+			.catch((err) => setLoadError(String(err?.message ?? err)));
 	}, [url]);
 
-	// Without this the card keeps showing "Install" until something else forces a rerender
+	// Without this the row keeps offering Install after the plugin is already installed
 	useEffect(() => {
 		if (plugin === undefined) return;
 		setInstalled(plugin.installed);
@@ -47,99 +44,64 @@ export const LunaStorePlugin = React.memo(({ url, downloads }: { url: string; do
 
 	if (!plugin) return null;
 
-	const isDev = url.startsWith(DEV_PREFIX);
 	const version = plugin.package?.version;
-	const author = plugin.package?.author;
-	const name = authorName(author);
-	const avatar = authorAvatar(author);
+	const author = authorName(plugin.package?.author);
+
+	const toggleInstall = async () => {
+		setBusy(true);
+		try {
+			await (installed ? plugin.uninstall() : plugin.install());
+		} finally {
+			setBusy(false);
+		}
+	};
 
 	return (
-		<Box
-			role="button"
-			tabIndex={0}
-			onMouseEnter={() => setHovered(true)}
-			onMouseLeave={() => setHovered(false)}
-			onClick={() => (installed ? plugin.uninstall() : plugin.install())}
-			onKeyDown={(e) => {
-				if (e.key === "Enter" || e.key === " ") {
-					e.preventDefault();
-					installed ? plugin.uninstall() : plugin.install();
-				}
-			}}
-			sx={{
-				fontFamily: wave.font,
-				display: "flex",
-				flexDirection: "column",
-				gap: 1,
-				height: "100%",
-				padding: "14px",
-				textAlign: "left",
-				cursor: "pointer",
-				borderRadius: wave.radius,
-				backgroundColor: hovered ? wave.surfaceRaised : wave.card,
-				// Installed reads as a state, not as a disabled card, so it keeps full contrast
-				border: `1px solid ${installed ? wave.accentDark : wave.line}`,
-				boxShadow: loadError ? `0 0 0 1px ${wave.danger}` : "none",
-				transition: "background-color .15s ease, border-color .15s ease",
-				"&:focus-visible": { outline: `2px solid ${wave.accent}`, outlineOffset: 2 },
-			}}
-		>
-			<Stack direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
-				<Tooltip title={plugin.name} placement="top-start">
-					<Typography sx={{ ...titleSx, ...clamp(2), flex: 1, minWidth: 0, overflowWrap: "anywhere" }} children={plugin.name} />
-				</Tooltip>
-				{version && (
-					<Typography
-						sx={{ ...descSx, flex: "0 0 auto", color: wave.textTertiary, paddingTop: "1px" }}
-						children={isDev ? `${version} DEV` : version}
+		<LunaRow
+			// State reads from a glyph, not a coloured border, so it survives greyscale
+			lead={
+				loadError !== undefined ? (
+					<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />
+				) : installed ? (
+					<CheckRounded sx={{ fontSize: 16, color: wave.textSecondary }} />
+				) : undefined
+			}
+			title={plugin.name}
+			meta={
+				<>
+					{version && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={version} />}
+					{author && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={`by ${author}`} />}
+				</>
+			}
+			desc={
+				loadError !== undefined ? (
+					<Typography title={loadError} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={loadError} />
+				) : (
+					(plugin.package?.description ?? "No description")
+				)
+			}
+			trailing={
+				<>
+					{downloads !== undefined && downloads > 0 && (
+						<Typography
+							title="Downloads from the GitHub release"
+							sx={{ ...metaSx, fontVariantNumeric: "tabular-nums", minWidth: 52, textAlign: "right" }}
+							children={downloads.toLocaleString()}
+						/>
+					)}
+					<Button
+						disableRipple
+						disabled={busy}
+						onClick={toggleInstall}
+						sx={
+							installed
+								? { ...buttonSx, backgroundColor: "transparent", color: wave.textSecondary, "&:hover": { backgroundColor: wave.line, color: wave.text } }
+								: buttonSx
+						}
+						children={busy ? (installed ? "Removing" : "Installing") : installed ? "Remove" : "Install"}
 					/>
-				)}
-			</Stack>
-
-			<Typography
-				sx={{ ...descSx, ...clamp(2), flexGrow: 1 }}
-				children={loadError ?? plugin.package?.description ?? "No description"}
-			/>
-
-			<Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: "center" }}>
-				{name && (
-					<Stack direction="row" spacing={0.75} sx={{ minWidth: 0, flexShrink: 1, alignItems: "center" }}>
-						{avatar && <Avatar src={avatar} sx={{ width: 18, height: 18 }} />}
-						<Typography
-							sx={{ ...descSx, color: wave.textTertiary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
-							children={name}
-						/>
-					</Stack>
-				)}
-				<Box sx={{ flexGrow: 1 }} />
-				{downloads !== undefined && downloads > 0 && (
-					<Tooltip title="Downloads of this plugin from its GitHub release" placement="top">
-						<Typography
-							sx={{ ...descSx, color: wave.textTertiary, flex: "0 0 auto", fontVariantNumeric: "tabular-nums" }}
-							children={`↓ ${downloads.toLocaleString()}`}
-						/>
-					</Tooltip>
-				)}
-				<Typography
-					sx={{
-						...descSx,
-						flex: "0 0 auto",
-						fontWeight: 600,
-						// Fixed width so Install and Installed occupy the same space and the
-						// download counts line up from card to card
-						minWidth: 62,
-						textAlign: "center",
-						paddingX: 1,
-						paddingY: "3px",
-						borderRadius: wave.radiusPill,
-						color: installed ? (hovered ? wave.danger : wave.accent) : hovered ? wave.fill : wave.textSecondary,
-						backgroundColor: installed ? "transparent" : hovered ? wave.accent : wave.line,
-						border: `1px solid ${installed ? (hovered ? wave.danger : wave.accentDark) : "transparent"}`,
-						transition: "color .15s ease, background-color .15s ease, border-color .15s ease",
-					}}
-					children={installed ? (hovered ? "Remove" : "Installed") : "Install"}
-				/>
-			</Stack>
-		</Box>
+				</>
+			}
+		/>
 	);
 });

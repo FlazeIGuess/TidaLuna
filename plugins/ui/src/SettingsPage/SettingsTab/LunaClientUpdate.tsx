@@ -17,6 +17,7 @@ export const version = (await pkg()).version;
 
 import { useConfirm } from "material-ui-confirm";
 import { LunaButton, LunaSettings, SpinningButton } from "../../components";
+import { buttonSx, wave } from "../../tidalTokens";
 
 export const fetchReleases = () => ftch.json<GitHubRelease[]>("https://api.github.com/repos/Inrixia/TidaLuna/releases");
 
@@ -64,7 +65,7 @@ export const LunaClientUpdate = React.memo(() => {
 			</Dialog>
 			<Select
 				fullWidth
-				sx={{ flex: 1, height: 48 }}
+				sx={{ flex: 1, height: 36 }}
 				value={selectedRelease}
 				onChange={(e) => setSelectedRelease(e.target.value)}
 				children={releases.map((release) => {
@@ -72,7 +73,7 @@ export const LunaClientUpdate = React.memo(() => {
 				})}
 			/>
 			<LunaButton
-				sx={{ height: 48 }}
+				sx={{ ...buttonSx, height: 36, marginLeft: 1.5 }}
 				disabled={!!busy}
 				children={action}
 				title={desc}
@@ -124,8 +125,7 @@ export const LunaClientUpdate = React.memo(() => {
 				}}
 			/>
 			<LunaButton
-				sx={{ height: 48, marginLeft: 2 }}
-				color="error"
+				sx={{ ...buttonSx, height: 36, marginLeft: 1, backgroundColor: "transparent", color: wave.danger, "&:hover": { backgroundColor: wave.line } }}
 				disabled={!!busy}
 				children={"Factory Reset"}
 				title={"Warning! This will reset luna to a clean install with no plugins."}

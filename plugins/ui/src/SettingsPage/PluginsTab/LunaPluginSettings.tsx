@@ -4,17 +4,22 @@ import type { ErrorInfo, ReactNode } from "react";
 import { LunaPlugin, unloadSet, type PluginPackage } from "@luna/core";
 import { store as obyStore } from "oby";
 
-import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
 
-import { LunaSwitch, LunaTrashButton, SpinningButton } from "../../components";
-import { LiveReloadToggle } from "./LiveReloadToggle";
-import { LunaPluginHeader } from "./LunaPluginHeader";
+import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
+import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
+import MoreVertRounded from "@mui/icons-material/MoreVertRounded";
+import RadioButtonUncheckedRounded from "@mui/icons-material/RadioButtonUncheckedRounded";
 
-import SettingsIcon from "@mui/icons-material/Settings";
-import { grey, red } from "@mui/material/colors";
+import { LunaSwitch } from "../../components";
+import { LunaBadge, LunaExpandableRow } from "../../components/LunaList";
+import { buttonSx, descSx, iconBtnSx, metaSx, oneLineSx, wave } from "../../tidalTokens";
 
 class PluginSettingsErrorBoundary extends React.Component<{ name: string; children: ReactNode }, { error?: string }> {
 	state: { error?: string } = {};
@@ -25,36 +30,36 @@ class PluginSettingsErrorBoundary extends React.Component<{ name: string; childr
 		console.error(`[Luna] Plugin settings crashed for ${this.props.name}:`, error, info.componentStack);
 	}
 	render() {
-		if (this.state.error) {
-			return (
-				<Stack spacing={1} sx={{ padding: 1 }}>
-					<Typography variant="body2" sx={{ color: red[300] }}>
-						Settings crashed: {this.state.error}
-					</Typography>
-					<Button
-						size="small"
-						variant="outlined"
-						sx={{ alignSelf: "flex-start", color: grey[400], borderColor: grey[700] }}
-						onClick={() => this.setState({ error: undefined })}
-					>
-						Retry
-					</Button>
-				</Stack>
-			);
-		}
-		return this.props.children;
+		if (this.state.error === undefined) return this.props.children;
+		return (
+			<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, paddingY: 1 }}>
+				<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger, flexShrink: 0 }} />
+				<Typography title={this.state.error} sx={{ ...descSx, ...oneLineSx, color: wave.danger, flex: 1 }} children={`Settings crashed: ${this.state.error}`} />
+				<Button disableRipple sx={buttonSx} onClick={() => this.setState({ error: undefined })} children="Retry" />
+			</Box>
+		);
 	}
 }
 
-export const LunaPluginSettings = React.memo(({ plugin }: { plugin: LunaPlugin }) => {
-	// Have to wrap in function call as Settings is a functional component
+export interface LunaPluginSettingsProps {
+	plugin: LunaPlugin;
+	open: boolean;
+	onToggle: () => void;
+}
+
+/**
+ * One installed plugin as a collapsible row. The chevron indicates state, the whole header
+ * toggles, and only the two verbs used constantly stay on the row: the enable switch and expand.
+ * Reload, live reload and uninstall moved into the overflow menu, which took the row from five
+ * icon buttons down to two controls.
+ */
+export const LunaPluginSettings = React.memo(({ plugin, open, onToggle }: LunaPluginSettingsProps) => {
 	const [enabled, setEnabled] = React.useState(plugin.enabled);
 	const [loading, setLoading] = React.useState(plugin.loading._);
 	const [loadError, setLoadError] = React.useState(plugin.loadError._);
 	const [installed, setInstalled] = React.useState(plugin.installed);
-	const [hideSettings, setHideSettings] = React.useState(plugin.store.hideSettings);
-
 	const [pkg, setPackage] = React.useState<PluginPackage>(obyStore.unwrap(plugin.store.package));
+	const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
 
 	React.useEffect(() => {
 		const unloads = new Set([
@@ -75,76 +80,96 @@ export const LunaPluginSettings = React.memo(({ plugin }: { plugin: LunaPlugin }
 		};
 	}, [plugin]);
 
-	// Memoize callbacks
 	const handleReload = React.useCallback(plugin.reload.bind(plugin), [plugin]);
 	const toggleEnabled = React.useCallback((_: unknown, checked: boolean) => (checked ? plugin.enable() : plugin.disable()), [plugin]);
 	const uninstall = React.useCallback(plugin.uninstall.bind(plugin), [plugin]);
 
 	if (!installed) return null;
 
-	const disabled = !enabled || loading;
-
 	const isDev = plugin.store.url.startsWith("http://127.0.0.1");
-
-	const author = pkg.author;
-	const desc = pkg.description;
 	const name = pkg.name;
-	const link = pkg.homepage ?? pkg.repository?.url;
-	let version = isDev ? `${pkg.version ?? ""} [DEV]` : pkg.version;
-
-	// Dont allow disabling core plugins
 	const isCore = LunaPlugin.corePlugins.has(name);
-
 	const Settings = plugin.exports?.Settings;
 	const hasSettings = Settings !== undefined && Settings !== null;
+	const link = pkg.homepage ?? pkg.repository?.url;
+	const author = typeof pkg.author === "string" ? pkg.author : pkg.author?.name;
+
+	const closeMenu = () => setMenuAnchor(null);
+	const run = (fn: () => unknown) => () => {
+		closeMenu();
+		fn();
+	};
 
 	return (
-		<Stack
-			spacing={1}
-			sx={{
-				borderRadius: 3,
-				backgroundColor: "rgba(0, 0, 0, 0.10)",
-				boxShadow: loadError ? "0 0 10px rgba(255, 0, 0, 0.70)" : "none",
-				padding: 2,
-				paddingTop: 1,
-				paddingBottom: hasSettings || hideSettings ? 2 : 1,
-			}}
-		>
-			<LunaPluginHeader
-				name={name}
-				version={version}
-				link={link}
-				loadError={loadError}
-				author={author}
-				desc={desc}
-				children={
-					<>
-						{!isCore && (
-							<Tooltip
-								title={enabled ? `Disable ${name}` : `Enable ${name}`}
-								children={<LunaSwitch checked={enabled} loading={loading} onChange={toggleEnabled} />}
+		<LunaExpandableRow
+			open={open}
+			onToggle={onToggle}
+			lead={
+				loadError ? (
+					<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />
+				) : enabled ? (
+					<CheckCircleRounded sx={{ fontSize: 16, color: wave.textSecondary }} />
+				) : (
+					<RadioButtonUncheckedRounded sx={{ fontSize: 16, color: wave.textTertiary }} />
+				)
+			}
+			title={name}
+			meta={
+				<>
+					{pkg.version && <Typography component="span" sx={{ ...metaSx, flex: "0 0 auto" }} children={pkg.version} />}
+					{isDev && <LunaBadge children="Dev" />}
+					{!enabled && !loadError && <LunaBadge children="Disabled" />}
+					{loadError && <LunaBadge tone="danger" children="Load failed" />}
+				</>
+			}
+			desc={loadError ? <Typography title={loadError} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={loadError} /> : (pkg.description ?? "No description")}
+			trailing={
+				<>
+					{author && <Typography sx={{ ...metaSx, display: { xs: "none", sm: "block" } }} children={author} />}
+					{!isCore && (
+						<Tooltip title={enabled ? `Disable ${name}` : `Enable ${name}`}>
+							<span onClick={(e) => e.stopPropagation()}>
+								<LunaSwitch checked={enabled} loading={loading} onChange={toggleEnabled} />
+							</span>
+						</Tooltip>
+					)}
+					<IconButton
+						disableRipple
+						aria-label={`More actions for ${name}`}
+						sx={iconBtnSx}
+						onClick={(e) => {
+							e.stopPropagation();
+							setMenuAnchor(e.currentTarget);
+						}}
+						children={<MoreVertRounded />}
+					/>
+					<Menu
+						anchorEl={menuAnchor}
+						open={menuAnchor !== null}
+						onClose={closeMenu}
+						slotProps={{ paper: { sx: { backgroundColor: wave.surfaceRaised, border: `1px solid ${wave.line}`, boxShadow: "none" } } }}
+					>
+						<MenuItem sx={descSx} onClick={run(handleReload)} children="Reload" />
+						{isDev && (
+							<MenuItem
+								sx={descSx}
+								onClick={run(() => (plugin.store.liveReload = !plugin.store.liveReload))}
+								children={plugin.store.liveReload ? "Live reload: on" : "Live reload: off"}
 							/>
 						)}
-						<SpinningButton title="Reload plugin" spin={loading} disabled={disabled} onClick={handleReload} />
-						<LiveReloadToggle plugin={plugin} disabled={disabled} sx={{ marginLeft: 1 }} />
-						<SpinningButton
-							title={hideSettings ? "Show settings" : "Hide settings"}
-							spin={loading}
-							disabled={!enabled || !hasSettings}
-							onClick={() => setHideSettings((prev) => (plugin.store.hideSettings = !prev))}
-							icon={SettingsIcon}
-							sxColor={grey.A400}
-						/>
-						{/* Don't show uninstall button for core plugins */}
-						{!isCore && <LunaTrashButton title="Uninstall plugin" onClick={uninstall} />}
-					</>
-				}
-			/>
-			{hasSettings && !hideSettings && (
-			<PluginSettingsErrorBoundary name={name}>
-				<Settings />
-			</PluginSettingsErrorBoundary>
-		)}
-		</Stack>
+						{link && <MenuItem sx={descSx} onClick={run(() => window.open(link, "_blank"))} children="Open homepage" />}
+						<MenuItem sx={descSx} onClick={run(() => navigator.clipboard?.writeText(plugin.store.url))} children="Copy URL" />
+						{!isCore && <MenuItem sx={{ ...descSx, color: wave.danger }} onClick={run(uninstall)} children="Uninstall" />}
+					</Menu>
+				</>
+			}
+			panel={
+				hasSettings ? (
+					<PluginSettingsErrorBoundary name={name} children={<Settings />} />
+				) : (
+					<Typography sx={{ ...metaSx, paddingY: 1 }} children="This plugin has no settings." />
+				)
+			}
+		/>
 	);
 });

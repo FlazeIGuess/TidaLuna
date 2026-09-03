@@ -3,15 +3,19 @@ import React from "react";
 import { type PluginPackage } from "@luna/core";
 
 import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 
-import { LunaTrashButton, SpinningButton } from "../../components";
+import DeleteOutlineRounded from "@mui/icons-material/DeleteOutlineRounded";
+import ErrorOutlineRounded from "@mui/icons-material/ErrorOutlineRounded";
+import RefreshRounded from "@mui/icons-material/RefreshRounded";
+
+import { LunaBadge, LunaGroup, LunaRow, LunaSection } from "../../components/LunaList";
+import { iconBtnSx, metaSx, oneLineSx, sectionSx, wave } from "../../tidalTokens";
 import { LunaStorePlugin } from "./LunaStorePlugin";
 import { metricsAreFresh, type RegistryStore } from "./registry";
-import { StoreHealth, StoreStars } from "./StoreMetrics";
-import { descSx, sectionSx, wave } from "./tidalTokens";
 
 interface StorePackage extends PluginPackage {
 	plugins: string[];
@@ -72,70 +76,72 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 	if (query && !filtered?.length) return null;
 
 	return (
-		<Box component="section" sx={{ fontFamily: wave.font, display: "flex", flexDirection: "column", gap: 1.5 }}>
-			{/* alignItems as a prop does not survive here, it computes to normal and everything stretches */}
-			<Stack direction="row" spacing={1} sx={{ minWidth: 0, alignItems: "center" }}>
-				<Tooltip title={url} placement="top-start">
-					<Typography
-						component="a"
-						href={link}
-						target="_blank"
-						rel="noreferrer"
-						sx={{
-							...sectionSx,
-							minWidth: 0,
-							overflow: "hidden",
-							textOverflow: "ellipsis",
-							whiteSpace: "nowrap",
-							textDecoration: "none",
-							"&:hover": { color: wave.accent },
-						}}
-						children={name}
+		<LunaSection
+			title={
+				<Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+					<Tooltip title={url} placement="top-start">
+						<Typography
+							component="a"
+							href={link}
+							target="_blank"
+							rel="noreferrer"
+							sx={{ ...sectionSx, ...oneLineSx, minWidth: 0, textDecoration: "none", "&:hover": { color: wave.accent } }}
+							children={name}
+						/>
+					</Tooltip>
+					{metrics?.stars ? (
+						<Typography
+							title={`Stars of ${metrics.repo}, shared by all plugins in this store`}
+							sx={{ ...metaSx, flex: "0 0 auto" }}
+							children={`${metrics.stars.toLocaleString()} stars`}
+						/>
+					) : null}
+					{metrics?.health === "archived" && <LunaBadge tone="warning" children="Archived" />}
+					{metrics?.health === "unreachable" && <LunaBadge tone="warning" children="Unreachable" />}
+					{filtered !== undefined && (
+						<Typography sx={{ ...metaSx, flex: "0 0 auto" }} children={`${filtered.length} plugin${filtered.length === 1 ? "" : "s"}`} />
+					)}
+				</Stack>
+			}
+			desc={pkg?.description ?? undefined}
+			trailing={
+				<Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flexShrink: 0 }}>
+					<Tooltip title="Reload store">
+						<span>
+							<IconButton disableRipple disabled={loading} onClick={fetchPackage} sx={iconBtnSx} children={<RefreshRounded />} />
+						</span>
+					</Tooltip>
+					<Tooltip title="Remove store">
+						<span>
+							<IconButton
+								disableRipple
+								disabled={isLocalDevStore}
+								onClick={onRemove}
+								sx={{ ...iconBtnSx, "&:hover": { color: wave.danger, backgroundColor: wave.line } }}
+								children={<DeleteOutlineRounded />}
+							/>
+						</span>
+					</Tooltip>
+				</Stack>
+			}
+		>
+			<LunaGroup>
+				{loadError ? (
+					<LunaRow
+						lead={<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />}
+						title="This store could not be loaded"
+						desc={<Typography title={`${loadError} - ${url}`} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={`${loadError} - ${url}`} />}
 					/>
-				</Tooltip>
-				{metrics && (
-					<>
-						<StoreStars stars={metrics.stars ?? 0} repo={metrics.repo} pluginCount={metrics.pluginCount} />
-						<StoreHealth health={metrics.health} />
-					</>
-				)}
-				{filtered !== undefined && (
-					<Typography
-						sx={{ ...descSx, color: wave.textTertiary, flex: "0 0 auto" }}
-						children={`${filtered.length} plugin${filtered.length === 1 ? "" : "s"}`}
-					/>
-				)}
-				<Box sx={{ flexGrow: 1 }} />
-				<SpinningButton title="Reload store" spin={loading} disabled={loading} onClick={fetchPackage} />
-				<LunaTrashButton disabled={isLocalDevStore} title="Remove store" onClick={onRemove} />
-			</Stack>
-
-			{pkg?.description && <Typography sx={{ ...descSx, marginTop: -1 }} children={pkg.description} />}
-
-			{loadError ? (
-				<Box sx={{ padding: "12px 14px", borderRadius: wave.radius, border: `1px solid ${wave.line}`, backgroundColor: wave.card }}>
-					<Typography sx={{ ...descSx, color: wave.danger }} children={`Could not load this store: ${loadError}`} />
-					<Typography sx={{ ...descSx, color: wave.textTertiary }} children={url} />
-				</Box>
-			) : (
-				<Box
-					sx={{
-						display: "grid",
-						// auto-fill instead of a fixed two columns, so wide windows actually use the space
-						gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-						gap: 1.5,
-						alignItems: "stretch",
-					}}
-				>
-					{filtered?.map((plugin) => (
+				) : (
+					filtered?.map((plugin) => (
 						<LunaStorePlugin
 							key={plugin}
 							url={`${url}/${isLocalDevStore ? plugin : plugin.replaceAll(" ", ".")}`}
 							downloads={metrics?.downloads?.[plugin]}
 						/>
-					))}
-				</Box>
-			)}
-		</Box>
+					))
+				)}
+			</LunaGroup>
+		</LunaSection>
 	);
 });

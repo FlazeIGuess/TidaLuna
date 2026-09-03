@@ -125,7 +125,7 @@ export const lunaMuiTheme = createTheme({
 		MuiSelect: {
 			styleOverrides: {
 				select: {
-					backgroundColor: "rgba(0, 0, 0, 0.20)",
+					backgroundColor: "var(--wave-color-solid-base-brighter, #242429)",
 				},
 			},
 		},

@@ -12,8 +12,8 @@ export type LunaSelectSettingProps<T = unknown> = SelectProps<T> & LunaTitleValu
 function _LunaSelectSetting<T = unknown>(props: LunaSelectSettingProps<T>) {
 	const { title, desc, ...selectProps } = props;
 	return (
-		<LunaSetting spacing={8} title={title} desc={desc}>
-			<Select<T> fullWidth {...selectProps} />
+		<LunaSetting title={title} desc={desc}>
+			<Select<T> size="small" fullWidth {...selectProps} />
 		</LunaSetting>
 	);
 }
