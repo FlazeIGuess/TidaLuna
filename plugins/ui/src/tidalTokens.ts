@@ -102,20 +102,25 @@ export const iconBtnSx = {
 	"&.Mui-disabled": { color: wave.textTertiary, opacity: 0.4 },
 } as const;
 
-/** A small real button, not a pill. Used for Install and Retry. */
+/**
+ * A small real button, not a pill. A visible fill plus a hairline so it reads as a button on a
+ * card, not as faint text: wave.line alone was too low contrast to recognise.
+ */
 export const buttonSx = {
 	fontFamily: wave.font,
 	fontSize: 12,
 	fontWeight: 600,
 	textTransform: "none",
 	minWidth: 88,
-	height: 28,
+	height: 30,
 	paddingX: 1.5,
 	borderRadius: wave.radiusSmall,
 	color: wave.text,
-	backgroundColor: wave.line,
+	backgroundColor: wave.surfaceHover,
+	border: `1px solid ${wave.lineStrong}`,
 	boxShadow: "none",
-	"&:hover": { backgroundColor: wave.surfaceHover, boxShadow: "none" },
+	"&:hover": { backgroundColor: wave.lineStrong, borderColor: wave.textTertiary, boxShadow: "none" },
+	"&.Mui-disabled": { color: wave.textTertiary, backgroundColor: wave.surface, borderColor: wave.line },
 } as const;
 
 /** A text field that looks like Tidal's own, not a bare MUI outline on black */
@@ -137,3 +142,7 @@ export const inputSx = {
 
 /** One line, ellipsis, full text belongs in a title attribute. Fixed row height depends on this. */
 export const oneLineSx = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
+
+/** Clamp to n lines. No reserved height, the grid stretches cards in a row to match. */
+export const clampSx = (lines: number) =>
+	({ display: "-webkit-box", WebkitLineClamp: lines, WebkitBoxOrient: "vertical", overflow: "hidden" }) as const;

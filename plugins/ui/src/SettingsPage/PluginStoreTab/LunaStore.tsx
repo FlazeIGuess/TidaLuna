@@ -125,23 +125,33 @@ export const LunaStore = React.memo(({ url, onRemove, searchQuery, entry }: Luna
 				</Stack>
 			}
 		>
-			<LunaGroup>
-				{loadError ? (
+			{loadError ? (
+				<LunaGroup>
 					<LunaRow
 						lead={<ErrorOutlineRounded sx={{ fontSize: 16, color: wave.danger }} />}
 						title="This store could not be loaded"
 						desc={<Typography title={`${loadError} - ${url}`} sx={{ ...metaSx, ...oneLineSx, color: wave.danger }} children={`${loadError} - ${url}`} />}
 					/>
-				) : (
-					filtered?.map((plugin) => (
+				</LunaGroup>
+			) : (
+				<Box
+					sx={{
+						display: "grid",
+						// Cards side by side, wrapping to as many columns as the width allows
+						gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+						gap: 1.5,
+						alignItems: "stretch",
+					}}
+				>
+					{filtered?.map((plugin) => (
 						<LunaStorePlugin
 							key={plugin}
 							url={`${url}/${isLocalDevStore ? plugin : plugin.replaceAll(" ", ".")}`}
 							downloads={metrics?.downloads?.[plugin]}
 						/>
-					))
-				)}
-			</LunaGroup>
+					))}
+				</Box>
+			)}
 		</LunaSection>
 	);
 });

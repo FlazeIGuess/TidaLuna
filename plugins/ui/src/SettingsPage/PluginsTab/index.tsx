@@ -3,13 +3,12 @@ import React, { useCallback, useMemo, useState } from "react";
 import { LunaPlugin } from "@luna/core";
 
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 
 import { LunaGroup, LunaRow, LunaSection } from "../../components/LunaList";
-import { buttonSx, descSx, inputSx, metaSx, metrics, wave } from "../../tidalTokens";
+import { descSx, inputSx, metaSx, metrics, wave } from "../../tidalTokens";
 import { LunaPluginSettings } from "./LunaPluginSettings";
 
 const matches = (plugin: LunaPlugin, query: string) => {
@@ -85,13 +84,6 @@ export const PluginsTab = React.memo(() => {
 					onChange={(e) => setQuery(e.target.value)}
 				/>
 				<Typography sx={{ ...metaSx, flex: "0 0 auto" }} children={q === "" ? `${total} installed` : `${shown} of ${total}`} />
-				<Button
-					disableRipple
-					disabled={openId === undefined}
-					onClick={() => setOpenId(undefined)}
-					sx={{ ...buttonSx, flex: "0 0 auto" }}
-					children="Collapse"
-				/>
 			</Stack>
 
 			{/* Errors first: a plugin that failed to load is the thing you came here for */}
