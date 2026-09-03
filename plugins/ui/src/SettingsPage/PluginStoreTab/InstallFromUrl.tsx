@@ -7,6 +7,7 @@ import { LunaPlugin } from "@luna/core";
 
 import { Messager } from "@luna/core";
 import { addToStores } from "./registry";
+import { inputSx } from "./tidalTokens";
 
 const successSx = {
 	"& .MuiOutlinedInput-root:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline": {
@@ -72,7 +73,7 @@ export const InstallFromUrl = React.memo(() => {
 
 	return (
 		<TextField
-			sx={success !== null ? successSx : null}
+			sx={{ ...inputSx, ...(success !== null ? successSx : {}) }}
 			error={err !== null}
 			variant="outlined"
 			size="small"

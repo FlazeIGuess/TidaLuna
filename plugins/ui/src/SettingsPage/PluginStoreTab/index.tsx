@@ -11,6 +11,7 @@ import Typography from "@mui/material/Typography";
 import { InstallFromUrl } from "./InstallFromUrl";
 import { LunaStore } from "./LunaStore";
 import { hiddenStoreUrls, refreshRegistry, registryStores, removeStore, userStoreUrls, visibleStores, type StoreEntry } from "./registry";
+import { descSx, inputSx, wave } from "./tidalTokens";
 
 export * from "./registry";
 
@@ -34,12 +35,13 @@ export const PluginStoreTab = React.memo(() => {
 	const onRemove = useCallback((storeUrl: string) => removeStore(storeUrl), []);
 
 	return (
-		<Stack spacing={2}>
+		<Stack spacing={4} sx={{ fontFamily: wave.font }}>
 			<Stack direction="row" spacing={2}>
 				<InstallFromUrl />
 				<TextField
 					fullWidth
 					size="small"
+					sx={inputSx}
 					placeholder="Search plugins..."
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
@@ -50,7 +52,7 @@ export const PluginStoreTab = React.memo(() => {
 				<LunaStore key={store.url} url={store.url} entry={store.entry} onRemove={() => onRemove(store.url)} searchQuery={searchQuery} />
 			))}
 			{stores.length === 0 && (
-				<Typography variant="subtitle2" sx={{ opacity: 0.7 }}>
+				<Typography sx={{ ...descSx }}>
 					No plugin stores yet. They load from the registry, check your connection or add one above.
 				</Typography>
 			)}

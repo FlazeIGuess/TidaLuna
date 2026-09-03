@@ -16,11 +16,14 @@ export interface LunaPluginComponentProps extends PropsWithChildren {
 	author?: LunaAuthor | string;
 	desc?: ReactNode;
 	sx?: BoxProps["sx"];
+	/** Far right of the header row, after the author. For buttons and metrics. */
+	actions?: ReactNode;
 }
-export const LunaPluginHeader = React.memo(({ name, version, loadError, author, desc, children, sx, link }: LunaPluginComponentProps) => (
+export const LunaPluginHeader = React.memo(({ name, version, loadError, author, desc, children, sx, link, actions }: LunaPluginComponentProps) => (
 	<Box sx={sx}>
-		<Stack direction="row" alignItems="center" spacing={1}>
-			<Typography variant="h6">
+		<Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
+			{/* minWidth 0 lets a long name ellipsis instead of shoving the author off the card */}
+			<Typography variant="h6" title={name} sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
 				<LunaLink href={link}>{name}</LunaLink>
 				{version && <Typography variant="caption" style={{ opacity: 0.7, marginLeft: 6 }} children={version} />}
 			</Typography>
@@ -40,7 +43,8 @@ export const LunaPluginHeader = React.memo(({ name, version, loadError, author, 
 				/>
 			)}
 			<Box sx={{ flexGrow: 1 }} /> {/* This pushes the author section to the right */}
-			{author && <LunaAuthorDisplay author={author} />}
+			{author && <LunaAuthorDisplay author={author} sx={{ flexShrink: 0 }} />}
+			{actions}
 		</Stack>
 		{desc && <Typography variant="subtitle2" gutterBottom children={desc} />}
 	</Box>
